@@ -20,7 +20,8 @@ NULL
 #' @param grand_total Total weight mass to preserve after bounding.
 #' @param diagnostics_every Record diagnostics every k iterations (0 = baseline only).
 #' @param verbose Print iteration progress.
-#' @export
+#' @keywords internal
+#' @noRd
 rake_ipf_rust <- function(weights, margins, max_iter, tol, bounds, grand_total, diagnostics_every, verbose) .Call(wrap__rake_ipf_rust, weights, margins, max_iter, tol, bounds, grand_total, diagnostics_every, verbose)
 
 #' Compute weighted proportions and discrepancy from targets for a single variable.
@@ -28,19 +29,22 @@ rake_ipf_rust <- function(weights, margins, max_iter, tol, bounds, grand_total, 
 #' @param weights Numeric weight vector.
 #' @param levels Integer-coded variable (0 = NA/ignore, 1..L = categories).
 #' @param targets Numeric target proportions (length L, should sum to 1).
-#' @export
+#' @keywords internal
+#' @noRd
 compute_discrepancy_rust <- function(weights, levels, targets) .Call(wrap__compute_discrepancy_rust, weights, levels, targets)
 
 #' Compute design effect and effective sample size from a weight vector.
 #'
 #' @param weights Numeric weight vector.
-#' @export
+#' @keywords internal
+#' @noRd
 design_effect_rust <- function(weights) .Call(wrap__design_effect_rust, weights)
 
 #' Compute summary statistics for a weight vector.
 #'
 #' @param weights Numeric weight vector.
-#' @export
+#' @keywords internal
+#' @noRd
 weight_summary_rust <- function(weights) .Call(wrap__weight_summary_rust, weights)
 
 

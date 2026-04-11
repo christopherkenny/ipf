@@ -135,7 +135,8 @@ fn record_diag_snapshot(
 /// @param grand_total Total weight mass to preserve after bounding.
 /// @param diagnostics_every Record diagnostics every k iterations (0 = baseline only).
 /// @param verbose Print iteration progress.
-/// @export
+/// @keywords internal
+/// @noRd
 #[extendr]
 fn rake_ipf_rust(
     weights: Doubles,
@@ -338,7 +339,8 @@ fn rake_ipf_rust(
 /// @param weights Numeric weight vector.
 /// @param levels Integer-coded variable (0 = NA/ignore, 1..L = categories).
 /// @param targets Numeric target proportions (length L, should sum to 1).
-/// @export
+/// @keywords internal
+/// @noRd
 #[extendr]
 fn compute_discrepancy_rust(weights: Doubles, levels: Integers, targets: Doubles) -> List {
     let n = weights.len();
@@ -389,7 +391,8 @@ fn compute_discrepancy_rust(weights: Doubles, levels: Integers, targets: Doubles
 /// Compute design effect and effective sample size from a weight vector.
 ///
 /// @param weights Numeric weight vector.
-/// @export
+/// @keywords internal
+/// @noRd
 #[extendr]
 fn design_effect_rust(weights: Doubles) -> List {
     let w: Vec<f64> = weights
@@ -423,7 +426,8 @@ fn design_effect_rust(weights: Doubles) -> List {
 /// Compute summary statistics for a weight vector.
 ///
 /// @param weights Numeric weight vector.
-/// @export
+/// @keywords internal
+/// @noRd
 #[extendr]
 fn weight_summary_rust(weights: Doubles) -> List {
     let mut w: Vec<f64> = weights
