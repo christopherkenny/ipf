@@ -1,0 +1,2292 @@
+# Getting Started with ipf
+
+## Overview
+
+Survey samples rarely match the population perfectly on key
+demographics. **Raking** (iterative proportional fitting) adjusts case
+weights so that the weighted sample margins match known population
+targets. `ipf` makes this fast and straightforward, with a Rust
+computational core and a clean R interface.
+
+This vignette walks through a complete raking workflow using the bundled
+`anes24` dataset — a subset of the 2024 American National Election
+Study.
+
+## Setup
+
+``` r
+library(ipf)
+data(anes24)
+```
+
+The data contains 966 respondents from the ANES 2024 face-to-face
+sample:
+
+``` r
+anes24
+#>     state    sex     race     income    education       married presidential
+#> 1      CO Female    White Over $100k         <NA>      Divorced        Trump
+#> 2      CA   Male    White Over $100k         <NA>       Married       Harris
+#> 3      NC Female    White       <NA>   Bachelor's       Married       Harris
+#> 4      MA   Male     <NA> Over $100k Some college       Married        Trump
+#> 5      WA Female    Black       <NA>   Bachelor's       Married         <NA>
+#> 6      GA   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 7      AR   Male    Black Under $50k         <NA>          <NA>       Harris
+#> 8      TX   Male Hispanic Under $50k Some college          <NA>        Trump
+#> 9      OR   Male    White Under $50k         <NA>      Divorced         <NA>
+#> 10     AL Female    White Under $50k         <NA>      Divorced         <NA>
+#> 11     AR Female    White $50k-$100k   Bachelor's       Married        Trump
+#> 12     TX Female    White Under $50k         <NA>      Divorced       Harris
+#> 13     AZ   Male    White Over $100k         <NA>      Divorced         <NA>
+#> 14     UT Female    White $50k-$100k Less than HS       Married         <NA>
+#> 15     GA   Male    White Over $100k     Graduate       Married       Harris
+#> 16     UT   Male    White $50k-$100k Some college       Married         <NA>
+#> 17     CO Female    White Under $50k         <NA>     Separated         <NA>
+#> 18     IL   Male    Black Over $100k         <NA>     Separated        Trump
+#> 19     TN   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 20   <NA> Female Hispanic       <NA>         <NA>          <NA>         <NA>
+#> 21     CA Female    Other Under $50k  High school       Married         <NA>
+#> 22   <NA> Female Hispanic Under $50k         <NA>      Divorced         <NA>
+#> 23     AZ   Male    White Under $50k Some college       Married       Harris
+#> 24   <NA>   Male    Black $50k-$100k         <NA>     Separated         <NA>
+#> 25     FL   Male    White $50k-$100k         <NA>          <NA>         <NA>
+#> 26     FL   Male    Black Over $100k   Bachelor's          <NA>       Harris
+#> 27     TX   Male    White Over $100k         <NA>          <NA>       Harris
+#> 28     CA   Male Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 29     MO   Male    White Over $100k     Graduate       Married       Harris
+#> 30     CT Female    White Under $50k         <NA>     Separated        Trump
+#> 31     CA Female    White Over $100k     Graduate       Widowed       Harris
+#> 32     TN   Male    White Over $100k Some college     Separated        Trump
+#> 33     NJ   Male    White Over $100k Some college       Married         <NA>
+#> 34     TN   Male Hispanic Over $100k Some college          <NA>         <NA>
+#> 35     MA   Male    White $50k-$100k Less than HS       Married         <NA>
+#> 36   <NA> Female Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 37     NY   Male Hispanic Over $100k   Bachelor's       Married       Harris
+#> 38   <NA> Female    White $50k-$100k         <NA>          <NA>         <NA>
+#> 39     TN   Male    White Over $100k     Graduate       Married         <NA>
+#> 40     AR Female    White $50k-$100k   Bachelor's       Married        Trump
+#> 41     WA Female    Other Under $50k         <NA>     Separated       Harris
+#> 42     TN Female    Other Over $100k Some college       Married         <NA>
+#> 43     CA   Male Hispanic Under $50k Less than HS       Married         <NA>
+#> 44     TN Female    White $50k-$100k         <NA>     Separated        Trump
+#> 45     MO Female    White Under $50k         <NA>      Divorced        Trump
+#> 46     NY Female    White $50k-$100k         <NA>      Divorced       Harris
+#> 47     IN Female    Other Over $100k Some college       Married         <NA>
+#> 48     UT Female    White Under $50k         <NA>     Separated       Harris
+#> 49     TN   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 50     AZ Female    White $50k-$100k Some college     Separated       Harris
+#> 51     SC   Male    White $50k-$100k         <NA>     Separated        Trump
+#> 52     UT   Male    White Over $100k   Bachelor's       Married        Trump
+#> 53     IA   Male    White Over $100k   Bachelor's       Married         <NA>
+#> 54     CT   Male    White Over $100k         <NA>          <NA>       Harris
+#> 55     WA Female    White $50k-$100k Some college       Married       Harris
+#> 56     GA Female Hispanic $50k-$100k         <NA>     Separated       Harris
+#> 57     CT   Male    White Over $100k   Bachelor's       Married        Trump
+#> 58     PA   Male    White       <NA>         <NA>      Divorced       Harris
+#> 59     MD Female    Black $50k-$100k  High school       Married       Harris
+#> 60     TX Female Hispanic Over $100k Some college       Married       Harris
+#> 61     IL Female    Black Over $100k     Graduate       Married       Harris
+#> 62     OR   Male Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 63     WI   Male    White Under $50k         <NA>     Separated         <NA>
+#> 64     AZ   Male Hispanic Under $50k         <NA>     Separated        Trump
+#> 65     TN   Male    Asian       <NA>   Bachelor's       Widowed       Harris
+#> 66     VA Female    White $50k-$100k         <NA>     Separated        Trump
+#> 67     TX Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 68     IL Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 69     TX Female    White $50k-$100k         <NA>     Separated       Harris
+#> 70     FL   Male    Black Under $50k Less than HS       Married       Harris
+#> 71   <NA> Female    Black $50k-$100k Less than HS     Separated         <NA>
+#> 72     TX Female    White $50k-$100k         <NA>     Separated       Harris
+#> 73     AZ   Male Hispanic $50k-$100k         <NA> Never married       Harris
+#> 74     IL   Male    Asian Over $100k     Graduate       Married       Harris
+#> 75     WA Female    White Over $100k   Bachelor's       Married       Harris
+#> 76     CT   Male    White $50k-$100k  High school       Married         <NA>
+#> 77     IL Female Hispanic Under $50k Less than HS       Married       Harris
+#> 78     UT Female Hispanic Over $100k Less than HS     Separated         <NA>
+#> 79     MO Female    White Under $50k         <NA>      Divorced        Trump
+#> 80     VA Female    White Over $100k     Graduate       Widowed       Harris
+#> 81     GA Female    White Under $50k         <NA>     Separated        Trump
+#> 82     IA Female    White Over $100k   Bachelor's     Separated        Trump
+#> 83     MO Female    White $50k-$100k Less than HS     Separated        Trump
+#> 84     MI   Male    White $50k-$100k         <NA>     Separated       Harris
+#> 85     FL   Male    White Over $100k   Bachelor's       Married        Trump
+#> 86     AL   Male    White $50k-$100k  High school       Married        Trump
+#> 87     WA   Male    White $50k-$100k         <NA>          <NA>         <NA>
+#> 88     SC Female    Asian Over $100k     Graduate       Married        Trump
+#> 89     CO Female    White Under $50k   Bachelor's       Widowed        Trump
+#> 90   <NA> Female    Other Under $50k         <NA>      Divorced         <NA>
+#> 91     UT Female    Asian       <NA>         <NA>      Divorced         <NA>
+#> 92     OH Female    White $50k-$100k         <NA> Never married        Trump
+#> 93     CA   Male    White Over $100k         <NA>     Separated        Trump
+#> 94     MO Female Hispanic Under $50k         <NA>          <NA>       Harris
+#> 95     ND   Male    White Over $100k         <NA>          <NA>        Trump
+#> 96     IL   Male    White Over $100k         <NA>      Divorced        Trump
+#> 97     VA Female    White Under $50k         <NA>          <NA>         <NA>
+#> 98     NC   Male    White $50k-$100k         <NA>          <NA>       Harris
+#> 99     TN   Male    Black       <NA>  High school       Married       Harris
+#> 100    VA   Male    Black $50k-$100k         <NA>          <NA>       Harris
+#> 101    FL   Male    White Under $50k Some college       Married        Trump
+#> 102    UT Female    White Over $100k   Bachelor's          <NA>       Harris
+#> 103    CA Female Hispanic Over $100k         <NA>     Separated       Harris
+#> 104    AR Female    White Under $50k         <NA>      Divorced        Trump
+#> 105    NJ   Male    Asian Over $100k   Bachelor's       Married       Harris
+#> 106    TX   Male    Other Over $100k   Bachelor's       Married        Trump
+#> 107    CA Female Hispanic Over $100k   Bachelor's       Married        Trump
+#> 108    MO Female    White $50k-$100k  High school          <NA>         <NA>
+#> 109    FL Female    Black Over $100k  High school       Married       Harris
+#> 110    MA   Male    White $50k-$100k         <NA>          <NA>       Harris
+#> 111    IA Female    White $50k-$100k         <NA>     Separated       Harris
+#> 112    IL Female    White Over $100k   Bachelor's       Married       Harris
+#> 113    CT   Male Hispanic Under $50k         <NA> Never married         <NA>
+#> 114    TX Female    White Over $100k Some college       Widowed        Trump
+#> 115  <NA> Female Hispanic Over $100k         <NA>          <NA>         <NA>
+#> 116    AR Female    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 117    VA Female    White Over $100k Some college       Married       Harris
+#> 118    IA Female    White Under $50k         <NA>      Divorced       Harris
+#> 119    NC   Male    White Over $100k     Graduate       Married       Harris
+#> 120    CT   Male    White $50k-$100k         <NA>      Divorced        Trump
+#> 121    MO Female    Other Over $100k   Bachelor's       Married         <NA>
+#> 122    SC Female    White Over $100k         <NA>          <NA>         <NA>
+#> 123    CT   Male    White Over $100k Some college       Married        Trump
+#> 124    NY Female     <NA>       <NA>     Graduate       Married         <NA>
+#> 125    NY   Male    White       <NA>  High school       Married       Harris
+#> 126    GA Female    White $50k-$100k         <NA>     Separated        Trump
+#> 127    CT Female    White Under $50k         <NA>     Separated       Harris
+#> 128    IL   Male    White Over $100k Some college       Married         <NA>
+#> 129    MO Female    White Under $50k         <NA>      Divorced       Harris
+#> 130    IN Female    White Under $50k Less than HS       Married         <NA>
+#> 131    GA Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 132    CA   Male    White $50k-$100k         <NA>          <NA>       Harris
+#> 133    ND   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 134    SC   Male    White Over $100k   Bachelor's          <NA>       Harris
+#> 135    FL   Male    White Under $50k   Bachelor's       Married        Trump
+#> 136    MN   Male    White Under $50k         <NA>      Divorced         <NA>
+#> 137    WI   Male    White Under $50k         <NA>      Divorced        Trump
+#> 138    TN Female    White $50k-$100k         <NA> Never married        Trump
+#> 139    MN Female    White Over $100k   Bachelor's       Married         <NA>
+#> 140    SC Female    Black Under $50k Less than HS          <NA>         <NA>
+#> 141    CT Female    White $50k-$100k         <NA>     Separated       Harris
+#> 142    TN   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 143    CT   Male    Other Under $50k         <NA>          <NA>       Harris
+#> 144    OR   Male    White $50k-$100k         <NA>          <NA>         <NA>
+#> 145    FL Female    Asian Over $100k     Graduate       Married       Harris
+#> 146    OH Female    White $50k-$100k         <NA>          <NA>        Trump
+#> 147    IL Female    Other Under $50k         <NA>          <NA>         <NA>
+#> 148    OR Female    White Over $100k     Graduate       Married       Harris
+#> 149    IA   Male     <NA>       <NA>   Bachelor's       Married         <NA>
+#> 150    AR Female    White $50k-$100k         <NA>     Separated       Harris
+#> 151    KY   Male    White Over $100k   Bachelor's       Married       Harris
+#> 152    CO Female    White Over $100k   Bachelor's       Married        Trump
+#> 153    PA   Male    White Over $100k   Bachelor's       Married        Trump
+#> 154    MO Female    White Over $100k  High school       Married        Trump
+#> 155  <NA>   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 156    OR Female    White Over $100k   Bachelor's       Married       Harris
+#> 157    AZ Female    White Under $50k Some college       Married       Harris
+#> 158  <NA>   Male    White Over $100k         <NA>     Separated         <NA>
+#> 159    CA   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 160  <NA> Female    Other Under $50k         <NA>          <NA>       Harris
+#> 161    MD Female    Other $50k-$100k         <NA>      Divorced       Harris
+#> 162    OR Female    White $50k-$100k         <NA> Never married        Trump
+#> 163    MI Female    White $50k-$100k         <NA>     Separated        Trump
+#> 164    IL   Male    White Over $100k     Graduate          <NA>       Harris
+#> 165    SC Female    White Over $100k         <NA>     Separated         <NA>
+#> 166    SC Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 167  <NA> Female    Other Over $100k   Bachelor's          <NA>         <NA>
+#> 168  <NA>   Male    White Under $50k         <NA>          <NA>       Harris
+#> 169    CA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 170    CT Female    White $50k-$100k         <NA>          <NA>       Harris
+#> 171    IA   Male    White Over $100k         <NA>          <NA>        Trump
+#> 172    MD   Male    Black Under $50k         <NA>     Separated        Trump
+#> 173    WA   Male    Black Over $100k         <NA>          <NA>       Harris
+#> 174    TN   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 175    GA Female    Black Over $100k         <NA>          <NA>         <NA>
+#> 176    PA   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 177    AZ Female Hispanic Over $100k         <NA>          <NA>       Harris
+#> 178    GA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 179    CT Female    White Under $50k  High school      Divorced        Trump
+#> 180    TX   Male    White Under $50k         <NA>      Divorced         <NA>
+#> 181    TX   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 182    OR Female    White Over $100k Some college       Married       Harris
+#> 183    MA Female    White Over $100k   Bachelor's       Married        Trump
+#> 184    NY Female    White       <NA>     Graduate       Married        Trump
+#> 185    SC   Male    White Over $100k         <NA>     Separated       Harris
+#> 186    IN   Male    White Over $100k         <NA>          <NA>       Harris
+#> 187  <NA> Female    White $50k-$100k  High school          <NA>       Harris
+#> 188    MN Female    White Over $100k  High school       Married       Harris
+#> 189  <NA>   Male    White       <NA>         <NA>          <NA>         <NA>
+#> 190    CA Female    White $50k-$100k         <NA>      Divorced       Harris
+#> 191  <NA>   Male    White $50k-$100k   Bachelor's       Married        Trump
+#> 192    TX Female    White $50k-$100k Some college       Married       Harris
+#> 193    PA Female    White       <NA>         <NA>     Separated       Harris
+#> 194    FL   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 195    MO   Male    White $50k-$100k         <NA>          <NA>       Harris
+#> 196    CA Female Hispanic Under $50k  High school       Married         <NA>
+#> 197    VA Female    White $50k-$100k  High school       Married        Trump
+#> 198    CT   Male    White Over $100k         <NA>     Separated        Trump
+#> 199    IL Female    White Under $50k Some college       Married        Trump
+#> 200  <NA> Female    Black $50k-$100k Some college       Married         <NA>
+#> 201    UT   Male Hispanic Over $100k         <NA>          <NA>       Harris
+#> 202    UT Female    White $50k-$100k  High school       Married        Trump
+#> 203    IL   Male    White $50k-$100k     Graduate       Married        Trump
+#> 204    AR   Male    White $50k-$100k  High school          <NA>         <NA>
+#> 205    CA Female    Black $50k-$100k         <NA>      Divorced         <NA>
+#> 206    IN Female    White $50k-$100k  High school          <NA>         <NA>
+#> 207    IL Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 208  <NA>   Male    Black Under $50k         <NA>          <NA>         <NA>
+#> 209    CA   Male    White Under $50k         <NA>     Separated         <NA>
+#> 210    GA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 211    CA Female Hispanic Under $50k Some college          <NA>       Harris
+#> 212    IN Female Hispanic $50k-$100k     Graduate       Married       Harris
+#> 213    MI   Male    White Over $100k Some college       Married        Trump
+#> 214    NJ Female    White Over $100k  High school       Married       Harris
+#> 215    FL   Male    Other $50k-$100k         <NA> Never married         <NA>
+#> 216    MN Female    White Over $100k         <NA> Never married       Harris
+#> 217    SC Female    White $50k-$100k         <NA>      Divorced         <NA>
+#> 218    UT Female    White $50k-$100k  High school Never married         <NA>
+#> 219    TX Female     <NA> $50k-$100k         <NA>     Separated       Harris
+#> 220  <NA> Female    Black       <NA> Some college          <NA>         <NA>
+#> 221    NJ   Male    White Over $100k         <NA>          <NA>       Harris
+#> 222    GA Female    Black $50k-$100k         <NA>     Separated       Harris
+#> 223    TN   Male    White Over $100k     Graduate       Married        Trump
+#> 224    CA   Male    White Over $100k         <NA>          <NA>       Harris
+#> 225    WI   Male    White Over $100k         <NA>     Separated        Trump
+#> 226    SC   Male    White       <NA>     Graduate       Widowed        Trump
+#> 227    WA Female    White $50k-$100k         <NA>     Separated         <NA>
+#> 228    CA   Male    White Over $100k     Graduate       Married       Harris
+#> 229    ND   Male    White Over $100k     Graduate       Married       Harris
+#> 230    CA Female Hispanic       <NA>         <NA>      Divorced       Harris
+#> 231  <NA> Female Hispanic Over $100k   Bachelor's       Married         <NA>
+#> 232    OR   Male    White Over $100k Some college       Married         <NA>
+#> 233    AR Female    Black Under $50k         <NA>          <NA>       Harris
+#> 234    CT Female    White $50k-$100k Some college       Married       Harris
+#> 235    SC   Male    White Under $50k         <NA>      Divorced        Trump
+#> 236    TN   Male    White Under $50k     Graduate       Married        Trump
+#> 237  <NA> Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 238    MD Female    Black Under $50k         <NA>          <NA>       Harris
+#> 239    UT   Male    White $50k-$100k Some college       Married        Trump
+#> 240    TN   Male    White Under $50k         <NA>          <NA>        Trump
+#> 241    CA   Male Hispanic Over $100k         <NA> Never married       Harris
+#> 242    OH Female    White       <NA>         <NA>          <NA>         <NA>
+#> 243    MI   Male    White Over $100k     Graduate       Married        Trump
+#> 244    CT   Male    White $50k-$100k   Bachelor's       Married        Trump
+#> 245    ND   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 246    CA Female Hispanic $50k-$100k         <NA>          <NA>       Harris
+#> 247    CA   Male Hispanic Over $100k Some college       Widowed         <NA>
+#> 248    MN Female    White $50k-$100k         <NA>     Separated       Harris
+#> 249    TX Female    White $50k-$100k     Graduate       Married       Harris
+#> 250    AR   Male    White Over $100k         <NA>       Married         <NA>
+#> 251    MN Female    White Over $100k  High school       Married       Harris
+#> 252  <NA> Female Hispanic       <NA>         <NA>          <NA>       Harris
+#> 253    TX   Male Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 254    NY Female    White Over $100k  High school       Married        Trump
+#> 255  <NA> Female Hispanic Under $50k   Bachelor's          <NA>         <NA>
+#> 256    WA Female    White Over $100k         <NA>          <NA>       Harris
+#> 257    IL   <NA>    White Under $50k  High school          <NA>         <NA>
+#> 258    VA Female    White Over $100k         <NA>      Divorced        Trump
+#> 259    CA Female    White Over $100k         <NA>      Divorced         <NA>
+#> 260    UT   Male    Other Over $100k   Bachelor's          <NA>       Harris
+#> 261    MA   Male    White Over $100k Some college     Separated        Trump
+#> 262    TX   Male    White Over $100k         <NA>          <NA>        Trump
+#> 263    WA   Male    White Over $100k   Bachelor's     Separated         <NA>
+#> 264    MI   Male    White Over $100k Some college       Married        Trump
+#> 265    OR Female    White $50k-$100k         <NA>     Separated       Harris
+#> 266    AL Female    White Over $100k  High school       Married        Trump
+#> 267    CA   Male    White Under $50k         <NA>     Separated        Trump
+#> 268  <NA>   Male    White $50k-$100k  High school     Separated         <NA>
+#> 269    ND   Male    White Under $50k Some college       Married        Trump
+#> 270    ND   Male    White Under $50k         <NA>     Separated         <NA>
+#> 271    SC   Male    White $50k-$100k  High school       Married        Trump
+#> 272  <NA>   Male    Asian $50k-$100k         <NA>          <NA>        Trump
+#> 273    SC   Male    White Over $100k   Bachelor's          <NA>       Harris
+#> 274    CA Female    Black $50k-$100k         <NA>     Separated         <NA>
+#> 275    NJ Female    White Over $100k     Graduate       Married        Trump
+#> 276  <NA>   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 277    MI Female    White $50k-$100k Some college       Married       Harris
+#> 278    SC Female    Other $50k-$100k  High school     Separated       Harris
+#> 279    TX   Male    Black Over $100k         <NA>          <NA>         <NA>
+#> 280    UT Female    Other $50k-$100k   Bachelor's       Married       Harris
+#> 281    TX Female    White Over $100k     Graduate       Married        Trump
+#> 282    ND Female    White $50k-$100k Some college       Married         <NA>
+#> 283    CA Female    White Over $100k Some college       Married        Trump
+#> 284    MO Female    White Under $50k         <NA>     Separated         <NA>
+#> 285    OH   Male    White Over $100k     Graduate       Married       Harris
+#> 286    OR   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 287    KY   Male    White Over $100k  High school       Widowed        Trump
+#> 288    SC   <NA>    Black Under $50k         <NA>          <NA>       Harris
+#> 289    WA   Male    White Over $100k         <NA>          <NA>       Harris
+#> 290    MA Female    White Over $100k     Graduate       Married         <NA>
+#> 291    OR   Male    White Over $100k         <NA> Never married        Trump
+#> 292    MO   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 293    CO   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 294    UT Female    White Over $100k     Graduate       Married         <NA>
+#> 295    ND   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 296    VA   Male    Asian Over $100k     Graduate       Married       Harris
+#> 297    MA   Male    White Over $100k     Graduate       Married       Harris
+#> 298    TX   Male    White Over $100k Some college       Married        Trump
+#> 299    SC   Male    White Over $100k Some college          <NA>       Harris
+#> 300    PA Female Hispanic       <NA>         <NA>          <NA>        Trump
+#> 301    MO Female    White Over $100k Some college       Married       Harris
+#> 302    OR   Male    White $50k-$100k     Graduate       Married       Harris
+#> 303    MI   Male    White Over $100k  High school       Married        Trump
+#> 304    FL Female Hispanic Over $100k Some college       Married        Trump
+#> 305    VA Female    White Over $100k     Graduate       Married       Harris
+#> 306    WY   Male Hispanic Under $50k         <NA>          <NA>        Trump
+#> 307    MO   Male    Asian Over $100k         <NA>          <NA>        Trump
+#> 308    CA   Male    White Over $100k   Bachelor's       Widowed       Harris
+#> 309    MD Female    Black $50k-$100k         <NA>     Separated       Harris
+#> 310    WI   Male    White Over $100k     Graduate       Married       Harris
+#> 311    FL Female    White $50k-$100k Some college          <NA>        Trump
+#> 312    MA   Male    Black Over $100k         <NA>          <NA>       Harris
+#> 313    WA   Male    White $50k-$100k   Bachelor's          <NA>         <NA>
+#> 314    AL   Male    Other $50k-$100k  High school          <NA>         <NA>
+#> 315    ND Female    White Over $100k  High school       Married         <NA>
+#> 316    OH   Male    White Over $100k         <NA> Never married         <NA>
+#> 317    OH Female    Black Over $100k  High school       Married         <NA>
+#> 318    MD Female    Black $50k-$100k         <NA>     Separated         <NA>
+#> 319    MO Female    White Over $100k Some college       Married        Trump
+#> 320    SC Female    Black $50k-$100k     Graduate       Married        Trump
+#> 321    VA Female    White Under $50k         <NA>      Divorced       Harris
+#> 322    AZ   Male Hispanic $50k-$100k         <NA>     Separated         <NA>
+#> 323    MD Female    White Over $100k         <NA>          <NA>       Harris
+#> 324    CA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 325    AL Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 326    MO   Male    White Under $50k         <NA>          <NA>        Trump
+#> 327    CA Female    White $50k-$100k         <NA>      Divorced         <NA>
+#> 328    IA   Male    Other Over $100k Some college       Married        Trump
+#> 329    WI   Male    White Over $100k   Bachelor's       Married        Trump
+#> 330    NC Female    White Over $100k Some college       Married        Trump
+#> 331    GA   Male    White Over $100k  High school       Married        Trump
+#> 332  <NA> Female    Black Under $50k         <NA>     Separated         <NA>
+#> 333    IA Female    White $50k-$100k         <NA>     Separated       Harris
+#> 334    IN Female    Black $50k-$100k Some college       Married         <NA>
+#> 335    TN Female    White Over $100k   Bachelor's       Married        Trump
+#> 336  <NA>   Male Hispanic Under $50k         <NA> Never married         <NA>
+#> 337  <NA> Female    White Under $50k  High school          <NA>         <NA>
+#> 338    TN   Male    White Over $100k   Bachelor's       Married       Harris
+#> 339    OR Female    Other $50k-$100k         <NA>          <NA>         <NA>
+#> 340    MO   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 341    NY Female    White $50k-$100k Some college          <NA>       Harris
+#> 342    NY   Male    White Over $100k         <NA>          <NA>       Harris
+#> 343    KY Female    White Over $100k Some college       Married       Harris
+#> 344    MI   Male Hispanic Over $100k  High school       Married        Trump
+#> 345    FL Female    White Under $50k Some college       Married        Trump
+#> 346    WA Female    White $50k-$100k         <NA>          <NA>       Harris
+#> 347    MD Female    Black Over $100k         <NA>     Separated       Harris
+#> 348    MD Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 349    SC Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 350    CA Female    White Over $100k         <NA>          <NA>       Harris
+#> 351    IL Female    Other Under $50k         <NA>          <NA>       Harris
+#> 352    NY   Male    White       <NA>  High school       Married        Trump
+#> 353    OR Female    Asian Over $100k   Bachelor's       Married       Harris
+#> 354    GA Female    White $50k-$100k Some college       Married        Trump
+#> 355    AR   Male    Other Over $100k     Graduate       Married       Harris
+#> 356    AZ   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 357  <NA>   Male    Asian Over $100k         <NA>          <NA>         <NA>
+#> 358    MO   Male    White Under $50k         <NA>     Separated       Harris
+#> 359    MD Female    Black Under $50k  High school          <NA>         <NA>
+#> 360    VA Female    White $50k-$100k         <NA>     Separated         <NA>
+#> 361    FL   Male Hispanic $50k-$100k         <NA>     Separated        Trump
+#> 362    WI   Male    White Over $100k   Bachelor's       Married       Harris
+#> 363    TX   Male    Black Under $50k         <NA>     Separated       Harris
+#> 364    MN Female    White       <NA>   Bachelor's       Married        Trump
+#> 365    AZ Female    White Over $100k   Bachelor's       Married       Harris
+#> 366    ND Female    White $50k-$100k     Graduate       Married         <NA>
+#> 367    MO   Male    White Under $50k         <NA> Never married         <NA>
+#> 368    MO   Male    Black Under $50k         <NA> Never married         <NA>
+#> 369    TX   Male    White Over $100k   Bachelor's       Married       Harris
+#> 370    KY Female    White Over $100k     Graduate       Married         <NA>
+#> 371  <NA> Female    White Under $50k         <NA>          <NA>         <NA>
+#> 372    CA   Male Hispanic $50k-$100k Some college       Married        Trump
+#> 373    GA Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 374    UT Female    White $50k-$100k Some college          <NA>        Trump
+#> 375    OH   Male    White Over $100k     Graduate       Married         <NA>
+#> 376    AZ   Male    White Over $100k     Graduate       Married       Harris
+#> 377    AL Female    White Over $100k  High school       Married         <NA>
+#> 378    NC Female    White Under $50k         <NA>     Separated        Trump
+#> 379    TX Female     <NA> Over $100k   Bachelor's       Married        Trump
+#> 380    FL   Male    Asian Under $50k     Graduate       Married         <NA>
+#> 381    MO Female    White Over $100k  High school       Widowed        Trump
+#> 382    IL   Male    White $50k-$100k         <NA>     Separated       Harris
+#> 383  <NA>   Male    White Under $50k         <NA>     Separated         <NA>
+#> 384    NJ   Male    White Over $100k     Graduate          <NA>       Harris
+#> 385    GA Female    White Over $100k     Graduate          <NA>       Harris
+#> 386    CT Female Hispanic $50k-$100k   Bachelor's          <NA>         <NA>
+#> 387    CT   Male    White $50k-$100k  High school       Married         <NA>
+#> 388    IL   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 389    IL   Male    White $50k-$100k         <NA>      Divorced       Harris
+#> 390    CA   Male    Asian $50k-$100k         <NA>          <NA>       Harris
+#> 391    UT   Male    White Under $50k Less than HS       Married        Trump
+#> 392    VA Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 393    NY Female    White Over $100k         <NA>          <NA>       Harris
+#> 394    CA Female Hispanic Under $50k         <NA>      Divorced       Harris
+#> 395    MN   Male    White $50k-$100k Some college       Married         <NA>
+#> 396    OH Female    White Over $100k Some college       Married       Harris
+#> 397    PA   Male    White Over $100k   Bachelor's          <NA>       Harris
+#> 398    UT Female    White Over $100k   Bachelor's       Married        Trump
+#> 399    SC Female    Black Under $50k         <NA>          <NA>       Harris
+#> 400    CA Female Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 401  <NA>   Male    White Over $100k   Bachelor's       Married         <NA>
+#> 402    TN   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 403    AZ Female    White Over $100k   Bachelor's       Married        Trump
+#> 404    PA   Male    Black Under $50k         <NA>          <NA>       Harris
+#> 405    NC Female    White $50k-$100k         <NA>      Divorced       Harris
+#> 406    DC   Male    White Over $100k         <NA>          <NA>       Harris
+#> 407    WA Female    White Over $100k     Graduate       Married       Harris
+#> 408    VA Female    White Over $100k         <NA>     Separated        Trump
+#> 409    TX Female Hispanic Over $100k Some college       Married       Harris
+#> 410    WI   Male    White Over $100k   Bachelor's       Married       Harris
+#> 411  <NA> Female    White $50k-$100k   Bachelor's       Married         <NA>
+#> 412    CT   Male    White Over $100k         <NA>          <NA>       Harris
+#> 413    MO Female    White $50k-$100k         <NA>          <NA>        Trump
+#> 414    TN Female    White Over $100k         <NA>      Divorced         <NA>
+#> 415    MN Female    White $50k-$100k Some college       Married       Harris
+#> 416    WA   Male    White Over $100k     Graduate       Married       Harris
+#> 417    KY Female    White Over $100k         <NA>      Divorced       Harris
+#> 418    VA Female    White Over $100k Some college       Married       Harris
+#> 419    OR   Male Hispanic Over $100k     Graduate       Married       Harris
+#> 420    IA Female    White Over $100k   Bachelor's       Married        Trump
+#> 421    CO   Male Hispanic $50k-$100k         <NA>          <NA>       Harris
+#> 422    WA Female    White Over $100k     Graduate       Married       Harris
+#> 423    TX   Male    White Over $100k   Bachelor's       Married        Trump
+#> 424    CA   Male Hispanic Over $100k         <NA>          <NA>       Harris
+#> 425    NY   Male    White Over $100k     Graduate       Married       Harris
+#> 426    TX Female Hispanic Over $100k Some college       Married       Harris
+#> 427    MO   Male    White Over $100k  High school       Married        Trump
+#> 428    GA   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 429  <NA> Female    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 430    AZ Female Hispanic Under $50k         <NA>          <NA>        Trump
+#> 431    NY Female    White Over $100k     Graduate       Married         <NA>
+#> 432    KY Female    White $50k-$100k         <NA>     Separated       Harris
+#> 433    TX Female Hispanic $50k-$100k Less than HS     Separated         <NA>
+#> 434    MI   Male    White $50k-$100k Some college       Married        Trump
+#> 435  <NA> Female    White Under $50k         <NA>          <NA>         <NA>
+#> 436    WA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 437  <NA> Female    Other       <NA>  High school       Married         <NA>
+#> 438    NY Female Hispanic Under $50k         <NA>          <NA>       Harris
+#> 439    TX Female Hispanic $50k-$100k  High school       Married       Harris
+#> 440    MO   Male    White Over $100k     Graduate       Married         <NA>
+#> 441    MO Female    White Under $50k         <NA>     Separated        Trump
+#> 442    CA   Male Hispanic $50k-$100k         <NA>          <NA>       Harris
+#> 443    OR Female    Other Under $50k         <NA>      Divorced         <NA>
+#> 444    VA Female    White Over $100k     Graduate       Married         <NA>
+#> 445    IL   Male Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 446    TX   Male    White $50k-$100k Some college       Married         <NA>
+#> 447    OR   Male    Other Under $50k         <NA>     Separated        Trump
+#> 448    AR   Male    Other Under $50k         <NA>      Divorced         <NA>
+#> 449    ND   Male    White Over $100k   Bachelor's       Married        Trump
+#> 450    OH Female    Black Over $100k  High school       Married       Harris
+#> 451    MO Female    Black $50k-$100k  High school          <NA>       Harris
+#> 452  <NA>   Male    Black $50k-$100k Some college       Married         <NA>
+#> 453    MO Female    White Over $100k   Bachelor's          <NA>         <NA>
+#> 454    IL Female    White Over $100k         <NA>      Divorced       Harris
+#> 455    NJ Female    White Over $100k   Bachelor's       Married       Harris
+#> 456    MO   Male    White $50k-$100k  High school       Married        Trump
+#> 457    FL Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 458    WA   Male    Asian Over $100k     Graduate       Married         <NA>
+#> 459    FL Female Hispanic Over $100k  High school       Married       Harris
+#> 460    IL Female    White Over $100k   Bachelor's       Married         <NA>
+#> 461    IA Female    White $50k-$100k Less than HS       Married       Harris
+#> 462    CA   Male    Asian $50k-$100k         <NA>          <NA>        Trump
+#> 463    MA Female    White Over $100k     Graduate       Married        Trump
+#> 464    AR   Male    White $50k-$100k Less than HS       Married         <NA>
+#> 465    MI   Male    White $50k-$100k  High school       Married       Harris
+#> 466    SC   Male    White Under $50k Less than HS       Married         <NA>
+#> 467    OH Female    Other $50k-$100k         <NA>     Separated         <NA>
+#> 468    CA Female    White Over $100k   Bachelor's          <NA>       Harris
+#> 469    CO Female    White $50k-$100k Less than HS       Married       Harris
+#> 470  <NA>   Male    Black $50k-$100k  High school          <NA>       Harris
+#> 471    WA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 472    UT Female    Black Under $50k     Graduate       Widowed         <NA>
+#> 473    NY Female    White Over $100k Some college          <NA>         <NA>
+#> 474    CA Female    Black Over $100k         <NA>          <NA>       Harris
+#> 475    CT Female    White $50k-$100k  High school       Married       Harris
+#> 476    UT   Male    White Under $50k         <NA>     Separated       Harris
+#> 477    IA   Male    Other $50k-$100k Some college       Married        Trump
+#> 478    TX   Male    Black Over $100k         <NA>          <NA>         <NA>
+#> 479  <NA> Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 480    TX Female    White $50k-$100k Some college       Married        Trump
+#> 481    MO   Male    White $50k-$100k   Bachelor's       Married        Trump
+#> 482    NY   Male    White $50k-$100k   Bachelor's       Married        Trump
+#> 483    UT   Male    White Over $100k     Graduate          <NA>       Harris
+#> 484    AL   Male Hispanic $50k-$100k  High school       Married        Trump
+#> 485    CA   Male    White $50k-$100k Some college       Married        Trump
+#> 486    TX   Male Hispanic Over $100k         <NA>          <NA>        Trump
+#> 487    TN   Male    White Under $50k         <NA>          <NA>       Harris
+#> 488  <NA> Female    White Under $50k Less than HS          <NA>         <NA>
+#> 489    WI Female    White $50k-$100k         <NA>       Married        Trump
+#> 490    OR   Male    White Over $100k     Graduate       Married        Trump
+#> 491    NY Female    Black Over $100k  High school       Married         <NA>
+#> 492    WI   Male    White $50k-$100k         <NA>     Separated       Harris
+#> 493    VA   Male    White Over $100k   Bachelor's       Married        Trump
+#> 494    FL Female    Black Under $50k         <NA>     Separated         <NA>
+#> 495    CT Female    White Over $100k     Graduate       Married       Harris
+#> 496    MI Female    Other Over $100k         <NA>          <NA>       Harris
+#> 497    TX Female Hispanic Under $50k Some college       Married       Harris
+#> 498    SC Female    Black Under $50k         <NA>          <NA>       Harris
+#> 499    MO   Male    Other Under $50k         <NA>     Separated        Trump
+#> 500    TX Female Hispanic Under $50k         <NA>          <NA>       Harris
+#> 501  <NA>   Male    White $50k-$100k  High school       Married         <NA>
+#> 502    SC   Male    White Over $100k         <NA>     Separated         <NA>
+#> 503  <NA> Female    White $50k-$100k   Bachelor's       Married        Trump
+#> 504    IA   Male    White Over $100k Some college       Married         <NA>
+#> 505    CT Female    White Over $100k         <NA>          <NA>        Trump
+#> 506    CA   Male Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 507    CA Female Hispanic Over $100k     Graduate       Married       Harris
+#> 508  <NA>   Male    White Over $100k         <NA>     Separated         <NA>
+#> 509  <NA> Female Hispanic $50k-$100k  High school       Married         <NA>
+#> 510  <NA>   Male    Other $50k-$100k   Bachelor's          <NA>         <NA>
+#> 511    WA   Male    White $50k-$100k Some college       Married        Trump
+#> 512    TX   Male    White $50k-$100k  High school          <NA>        Trump
+#> 513    UT   Male    White $50k-$100k   Bachelor's          <NA>       Harris
+#> 514    TX Female     <NA>       <NA>         <NA>          <NA>         <NA>
+#> 515    CA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 516    IA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 517    NY Female    Black       <NA>         <NA>          <NA>         <NA>
+#> 518  <NA> Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 519    CT   Male    White Over $100k         <NA> Never married       Harris
+#> 520    WA Female    White Over $100k   Bachelor's       Married       Harris
+#> 521    TN   Male    White Over $100k         <NA>          <NA>        Trump
+#> 522    OH Female    White Over $100k     Graduate     Separated       Harris
+#> 523    CA   Male    White Over $100k  High school       Married        Trump
+#> 524  <NA>   Male    White Over $100k Some college       Married         <NA>
+#> 525    IN   Male    Other Under $50k         <NA>          <NA>        Trump
+#> 526  <NA> Female    White       <NA>  High school       Married         <NA>
+#> 527    MO Female    White $50k-$100k         <NA>     Separated       Harris
+#> 528    MN   Male    Other $50k-$100k Less than HS          <NA>         <NA>
+#> 529    MA   Male    White Over $100k     Graduate          <NA>       Harris
+#> 530    NY Female    White Over $100k     Graduate       Married       Harris
+#> 531    UT   Male    White Under $50k         <NA>          <NA>       Harris
+#> 532    IA   Male    White $50k-$100k     Graduate       Married         <NA>
+#> 533    MO Female    White $50k-$100k Less than HS          <NA>         <NA>
+#> 534    CA   Male    Asian Under $50k   Bachelor's       Married         <NA>
+#> 535    OR Female    Other $50k-$100k  High school          <NA>       Harris
+#> 536  <NA>   Male    White $50k-$100k  High school          <NA>         <NA>
+#> 537    VA   Male    White $50k-$100k Some college       Married         <NA>
+#> 538    SC Female    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 539    MO Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 540    ND   Male Hispanic Over $100k         <NA>          <NA>         <NA>
+#> 541    UT Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 542    TX   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 543    TX Female    White       <NA>         <NA>     Separated       Harris
+#> 544    SC Female    Black $50k-$100k         <NA>      Divorced       Harris
+#> 545    GA   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 546    KY   Male    White $50k-$100k Some college       Married        Trump
+#> 547    CA Female    Other Over $100k Some college       Married         <NA>
+#> 548    CT   Male    White Over $100k Some college       Married        Trump
+#> 549    TX   Male    White $50k-$100k Some college       Married         <NA>
+#> 550    OR Female    White $50k-$100k         <NA>          <NA>       Harris
+#> 551  <NA> Female    White Under $50k         <NA>          <NA>       Harris
+#> 552    CA   Male    White Over $100k Less than HS       Married        Trump
+#> 553    OR Female    White Over $100k Some college       Married       Harris
+#> 554    OR Female    White Over $100k   Bachelor's       Married       Harris
+#> 555    MA Female    White $50k-$100k         <NA>      Divorced       Harris
+#> 556    TN   Male    White Over $100k Some college       Married        Trump
+#> 557    KY Female    Black $50k-$100k         <NA>     Separated         <NA>
+#> 558    AL Female    White Under $50k         <NA>          <NA>       Harris
+#> 559    CA   Male    White Over $100k Some college       Married       Harris
+#> 560    SC Female    White Over $100k         <NA>          <NA>        Trump
+#> 561    PA Female    White $50k-$100k         <NA>          <NA>       Harris
+#> 562    TX Female Hispanic Under $50k Less than HS       Married         <NA>
+#> 563    TX   Male    Black Over $100k         <NA>     Separated         <NA>
+#> 564    AL   Male    White $50k-$100k  High school       Married       Harris
+#> 565    FL Female    Other $50k-$100k         <NA>          <NA>         <NA>
+#> 566    FL Female    White $50k-$100k Some college       Married        Trump
+#> 567    MN Female    Other Under $50k  High school     Separated       Harris
+#> 568    PA Female    White Over $100k     Graduate       Married       Harris
+#> 569    CA Female    White       <NA>         <NA>          <NA>       Harris
+#> 570    WI Female    White $50k-$100k  High school       Married         <NA>
+#> 571    GA   Male    White $50k-$100k         <NA>     Separated        Trump
+#> 572  <NA> Female    Black $50k-$100k  High school       Married         <NA>
+#> 573  <NA>   Male Hispanic $50k-$100k   Bachelor's       Married         <NA>
+#> 574    MN Female    White $50k-$100k Less than HS     Separated        Trump
+#> 575    IL   Male    White Over $100k Some college       Married       Harris
+#> 576    MO   Male    Other $50k-$100k         <NA>          <NA>        Trump
+#> 577    AL   Male    Black Over $100k  High school       Married        Trump
+#> 578    MO Female    White Over $100k   Bachelor's       Married       Harris
+#> 579    PA   Male    Other       <NA>         <NA>          <NA>         <NA>
+#> 580    SC Female    White Under $50k         <NA>      Divorced        Trump
+#> 581    AL Female    White Over $100k   Bachelor's       Married         <NA>
+#> 582    OR Female    White Over $100k     Graduate       Married       Harris
+#> 583    IL Female    White Over $100k Some college       Married       Harris
+#> 584    AL   Male    Black Under $50k  High school       Married         <NA>
+#> 585    UT Female    White $50k-$100k   Bachelor's       Married        Trump
+#> 586    MA   Male    White Over $100k         <NA>          <NA>       Harris
+#> 587    WA Female    White Over $100k  High school       Married        Trump
+#> 588  <NA>   Male    Other Under $50k         <NA>          <NA>         <NA>
+#> 589    UT Female    White Under $50k  High school       Married        Trump
+#> 590    PA Female    White Under $50k         <NA>     Separated       Harris
+#> 591    FL   Male    White $50k-$100k Some college          <NA>         <NA>
+#> 592    AZ Female    White Over $100k     Graduate       Married       Harris
+#> 593    IA   Male    White $50k-$100k  High school       Married        Trump
+#> 594  <NA>   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 595  <NA> Female    White Under $50k         <NA>      Divorced        Trump
+#> 596    IA Female    White Under $50k         <NA>      Divorced         <NA>
+#> 597    MO Female    White Under $50k  High school      Divorced       Harris
+#> 598    CA Female    White Over $100k   Bachelor's       Married       Harris
+#> 599    CT Female    Black       <NA>     Graduate       Married       Harris
+#> 600    MO   Male    White Over $100k         <NA>     Separated        Trump
+#> 601    TX Female    White Under $50k         <NA>          <NA>         <NA>
+#> 602    CA Female    White Under $50k Some college       Married       Harris
+#> 603    WA   Male    White $50k-$100k   Bachelor's          <NA>        Trump
+#> 604    WA   Male    White       <NA>  High school       Married         <NA>
+#> 605    AL Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 606    CA Female Hispanic Under $50k   Bachelor's       Married       Harris
+#> 607    WI Female    White Over $100k Some college       Married        Trump
+#> 608    TX Female    White Under $50k         <NA>          <NA>       Harris
+#> 609    OR Female Hispanic Over $100k   Bachelor's       Married       Harris
+#> 610    SC Female    White Over $100k   Bachelor's          <NA>       Harris
+#> 611    FL   Male Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 612    IL Female    White Over $100k     Graduate       Married       Harris
+#> 613    CT Female    White Over $100k     Graduate       Married        Trump
+#> 614    IN Female    Black Under $50k         <NA>     Separated       Harris
+#> 615    FL Female Hispanic Under $50k         <NA>      Divorced         <NA>
+#> 616    TX   Male    White Over $100k Some college       Married        Trump
+#> 617    CA Female    White Under $50k Some college       Married        Trump
+#> 618    IN Female    White Over $100k Some college       Married         <NA>
+#> 619    CO Female    White $50k-$100k     Graduate       Married       Harris
+#> 620  <NA> Female    White Over $100k  High school       Married         <NA>
+#> 621    AR   Male    White $50k-$100k   Bachelor's     Separated         <NA>
+#> 622    MO Female    White Over $100k         <NA>          <NA>       Harris
+#> 623    CT Female Hispanic $50k-$100k Some college       Married         <NA>
+#> 624    WA   Male    Asian Over $100k   Bachelor's       Married         <NA>
+#> 625    OH Female    White Under $50k         <NA>          <NA>         <NA>
+#> 626  <NA>   Male    White Under $50k         <NA>     Separated        Trump
+#> 627    IN Female    Other $50k-$100k  High school          <NA>       Harris
+#> 628    TN   Male    Black $50k-$100k         <NA>      Divorced       Harris
+#> 629    UT Female    White $50k-$100k         <NA>          <NA>       Harris
+#> 630    IN Female    White Over $100k  High school       Married       Harris
+#> 631    AL   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 632    CA   Male Hispanic Over $100k   Bachelor's       Married       Harris
+#> 633    SC Female    White Over $100k   Bachelor's       Married         <NA>
+#> 634    AR   Male    Black Under $50k         <NA>     Separated        Trump
+#> 635    CO Female    White Over $100k     Graduate       Married       Harris
+#> 636    IA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 637    CA Female    White Over $100k   Bachelor's          <NA>         <NA>
+#> 638    TX Female    White Under $50k Some college       Married        Trump
+#> 639    NJ   Male    White Over $100k     Graduate       Married       Harris
+#> 640    MA Female Hispanic $50k-$100k         <NA>      Divorced       Harris
+#> 641    VA   Male    White $50k-$100k Less than HS       Married        Trump
+#> 642  <NA> Female    White $50k-$100k         <NA>     Separated         <NA>
+#> 643    WA   Male    White Over $100k   Bachelor's       Married         <NA>
+#> 644    CT Female    White Over $100k   Bachelor's       Married        Trump
+#> 645    ND Female    White Over $100k Some college       Married         <NA>
+#> 646    TX   Male    White Over $100k Some college       Married        Trump
+#> 647    KY   Male Hispanic $50k-$100k Some college       Widowed        Trump
+#> 648    FL   Male    White Over $100k     Graduate       Married       Harris
+#> 649    GA Female    Black $50k-$100k         <NA>     Separated         <NA>
+#> 650    NY Female    Black Under $50k Some college       Married       Harris
+#> 651    GA   Male    White Under $50k     Graduate       Married        Trump
+#> 652    CT Female    White Under $50k         <NA>     Separated         <NA>
+#> 653    TN Female    White Under $50k   Bachelor's       Married        Trump
+#> 654    IA Female    White Under $50k         <NA>          <NA>        Trump
+#> 655  <NA> Female    Black $50k-$100k  High school       Married         <NA>
+#> 656  <NA> Female    White $50k-$100k         <NA>          <NA>         <NA>
+#> 657    GA   Male    White Over $100k         <NA>       Married        Trump
+#> 658    OH   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 659    OR Female    Asian Over $100k         <NA>          <NA>         <NA>
+#> 660    IN Female    White $50k-$100k Some college       Married        Trump
+#> 661    KY   Male    White Over $100k   Bachelor's       Widowed       Harris
+#> 662    AL   Male    White Over $100k         <NA>          <NA>        Trump
+#> 663    MD Female    White Over $100k  High school          <NA>         <NA>
+#> 664    AR Female    White Under $50k         <NA>     Separated        Trump
+#> 665    MO   Male    Black $50k-$100k Some college       Widowed       Harris
+#> 666    CA Female    White $50k-$100k   Bachelor's       Married       Harris
+#> 667    OH   Male    Black $50k-$100k         <NA>          <NA>       Harris
+#> 668    AZ Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 669    MA   Male    White Over $100k         <NA>     Separated         <NA>
+#> 670    DC Female    Black $50k-$100k         <NA>          <NA>       Harris
+#> 671    PA Female    White Under $50k         <NA>      Divorced        Trump
+#> 672    WA Female Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 673  <NA>   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 674    OR Female    Other Under $50k         <NA>          <NA>         <NA>
+#> 675    GA Female    Black $50k-$100k  High school       Married         <NA>
+#> 676    TN Female    White Over $100k         <NA>     Separated       Harris
+#> 677  <NA>   Male Hispanic Over $100k Some college       Married       Harris
+#> 678    VA   Male    Asian Over $100k Some college       Married        Trump
+#> 679    MN   Male    White Over $100k         <NA>     Separated       Harris
+#> 680    MI Female    White Over $100k Some college       Married       Harris
+#> 681  <NA> Female    White Under $50k         <NA>      Divorced         <NA>
+#> 682    FL   Male    White Over $100k         <NA>      Divorced       Harris
+#> 683    TN   Male    White $50k-$100k         <NA>          <NA>         <NA>
+#> 684    KY   <NA>    White       <NA>         <NA>      Divorced        Trump
+#> 685    IL   Male    White Under $50k         <NA>     Separated        Trump
+#> 686    TX Female    White $50k-$100k   Bachelor's       Married        Trump
+#> 687    MN Female    White Over $100k Some college       Married       Harris
+#> 688    OR   Male    Other Under $50k Less than HS       Married        Trump
+#> 689    NJ   Male    Asian $50k-$100k   Bachelor's       Married         <NA>
+#> 690    MN Female    White Over $100k  High school          <NA>        Trump
+#> 691    UT Female    White $50k-$100k         <NA>       Married        Trump
+#> 692    MO Female    White Over $100k   Bachelor's       Widowed        Trump
+#> 693    WI   Male    White $50k-$100k   Bachelor's       Married       Harris
+#> 694    TX Female    Black Under $50k         <NA>          <NA>         <NA>
+#> 695    MA   Male    White Over $100k     Graduate       Married       Harris
+#> 696    MN   Male    White Over $100k   Bachelor's       Married       Harris
+#> 697    MD   Male    Black       <NA>         <NA>          <NA>       Harris
+#> 698    IN Female    White $50k-$100k         <NA>     Separated        Trump
+#> 699    TX   Male    Other Over $100k  High school       Married         <NA>
+#> 700    PA Female    Black       <NA>         <NA> Never married       Harris
+#> 701    MD   Male    Black Under $50k         <NA>          <NA>       Harris
+#> 702    OR   Male    White $50k-$100k         <NA>     Separated        Trump
+#> 703  <NA>   Male    White Under $50k         <NA>     Separated         <NA>
+#> 704    FL   Male Hispanic Over $100k   Bachelor's       Married       Harris
+#> 705    OR   Male    White $50k-$100k  High school       Married       Harris
+#> 706    IN   Male    White Over $100k  High school       Married        Trump
+#> 707    CT Female    Other Under $50k         <NA>     Separated         <NA>
+#> 708  <NA>   Male    White $50k-$100k  High school          <NA>         <NA>
+#> 709    TN   Male    White Under $50k         <NA>     Separated       Harris
+#> 710    MA Female    White Over $100k         <NA>     Separated       Harris
+#> 711    IN Female    Other Under $50k         <NA>          <NA>         <NA>
+#> 712  <NA> Female Hispanic Under $50k Less than HS       Married         <NA>
+#> 713  <NA>   Male    White Under $50k         <NA> Never married         <NA>
+#> 714    IL Female    White Under $50k         <NA>          <NA>         <NA>
+#> 715    MO   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 716  <NA>   Male    Asian Under $50k         <NA>      Divorced        Trump
+#> 717  <NA>   Male    Other $50k-$100k Some college          <NA>         <NA>
+#> 718  <NA>   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 719    AL   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 720  <NA> Female    White Under $50k Less than HS       Married         <NA>
+#> 721  <NA>   Male    White       <NA> Some college       Married         <NA>
+#> 722    CA   Male    Other Over $100k         <NA>      Divorced       Harris
+#> 723    CO Female     <NA> Over $100k     Graduate       Married        Trump
+#> 724    CT Female    White Under $50k         <NA>      Divorced       Harris
+#> 725    GA   Male    White Over $100k   Bachelor's       Married        Trump
+#> 726  <NA>   Male Hispanic $50k-$100k Some college       Married        Trump
+#> 727  <NA>   Male Hispanic Over $100k Some college       Married         <NA>
+#> 728    IL Female Hispanic Over $100k   Bachelor's       Married       Harris
+#> 729  <NA> Female    White Under $50k         <NA>     Separated         <NA>
+#> 730    TX   Male Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 731    CT Female    White Over $100k   Bachelor's       Married         <NA>
+#> 732    TX   Male    White Over $100k   Bachelor's       Married        Trump
+#> 733  <NA> Female    White Under $50k  High school          <NA>         <NA>
+#> 734    IA Female    White Over $100k     Graduate       Married         <NA>
+#> 735    SC   Male    White Under $50k   Bachelor's       Married        Trump
+#> 736    TX Female Hispanic Under $50k         <NA>          <NA>       Harris
+#> 737    MI Female    White       <NA>         <NA>      Divorced        Trump
+#> 738    CA Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 739    GA Female    White Over $100k         <NA>      Divorced        Trump
+#> 740    CO Female    White Over $100k         <NA>      Divorced         <NA>
+#> 741    MA   Male    White Over $100k   Bachelor's       Married         <NA>
+#> 742    CT   Male    White Over $100k   Bachelor's       Married         <NA>
+#> 743  <NA>   Male    White Under $50k  High school     Separated         <NA>
+#> 744    KY Female    White Over $100k     Graduate       Married        Trump
+#> 745    TX Female    Black Over $100k         <NA>          <NA>         <NA>
+#> 746    IA Female    White $50k-$100k  High school     Separated        Trump
+#> 747    MD Female    White Under $50k         <NA>          <NA>         <NA>
+#> 748    AZ   Male    White Over $100k  High school       Married        Trump
+#> 749    CA   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 750    SC Female    Black Over $100k         <NA>     Separated       Harris
+#> 751  <NA>   Male    Black $50k-$100k Some college       Married         <NA>
+#> 752    CA Female    Black Over $100k         <NA>          <NA>       Harris
+#> 753    IL   Male    Black Under $50k         <NA>          <NA>       Harris
+#> 754    TN Female    White Under $50k         <NA>      Divorced        Trump
+#> 755    OR Female    White $50k-$100k         <NA>     Separated       Harris
+#> 756    NY   Male    White $50k-$100k   Bachelor's       Married        Trump
+#> 757    OR   Male    White Over $100k Some college       Married        Trump
+#> 758    NY   Male    White Over $100k     Graduate          <NA>         <NA>
+#> 759    CT Female    White Over $100k  High school       Married        Trump
+#> 760    IN   Male    White $50k-$100k Some college       Married        Trump
+#> 761    WA   Male    Other Over $100k  High school     Separated        Trump
+#> 762  <NA> Female Hispanic Over $100k         <NA>     Separated         <NA>
+#> 763    AL Female    White Under $50k         <NA>      Divorced         <NA>
+#> 764    SC   Male    Black Under $50k         <NA>       Married         <NA>
+#> 765    UT Female    White       <NA>     Graduate       Married        Trump
+#> 766    SC Female    Black Under $50k  High school          <NA>         <NA>
+#> 767    IA Female    White Over $100k Some college       Married         <NA>
+#> 768    CA   Male    Black Under $50k         <NA>     Separated         <NA>
+#> 769    CO Female    White Over $100k   Bachelor's       Married       Harris
+#> 770    AL Female    Black Under $50k         <NA> Never married       Harris
+#> 771    TX   <NA> Hispanic       <NA>         <NA> Never married        Trump
+#> 772    FL   Male    White Under $50k         <NA>      Divorced        Trump
+#> 773  <NA>   Male    Asian Over $100k     Graduate       Widowed         <NA>
+#> 774    OR Female    White Over $100k         <NA>          <NA>         <NA>
+#> 775    NJ Female    White $50k-$100k Some college       Married         <NA>
+#> 776    MO   Male    Other Under $50k         <NA>          <NA>         <NA>
+#> 777    WI   Male    White Over $100k         <NA>      Divorced        Trump
+#> 778    GA Female    White $50k-$100k         <NA>     Separated        Trump
+#> 779    OR   Male    White Under $50k         <NA>          <NA>       Harris
+#> 780    VA   Male    White $50k-$100k         <NA> Never married       Harris
+#> 781    TX Female    White Over $100k  High school       Married         <NA>
+#> 782    AL   Male    White Over $100k  High school       Married        Trump
+#> 783    NJ Female    Asian Over $100k     Graduate       Married        Trump
+#> 784    TX   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 785    NY   Male    Asian Over $100k     Graduate       Married       Harris
+#> 786    VA Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 787    TX   Male    Other $50k-$100k         <NA>     Separated        Trump
+#> 788  <NA>   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 789    AR Female    White $50k-$100k         <NA>     Separated        Trump
+#> 790    IL   Male    White Over $100k         <NA>      Divorced         <NA>
+#> 791    AZ Female    White Over $100k         <NA>      Divorced       Harris
+#> 792    CT Female    White Over $100k     Graduate       Married        Trump
+#> 793    FL   Male    White $50k-$100k Some college       Widowed        Trump
+#> 794    TX   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 795    GA   Male    Black $50k-$100k  High school       Married       Harris
+#> 796    NJ   Male    White Over $100k  High school       Married       Harris
+#> 797  <NA> Female    Asian $50k-$100k Some college       Married         <NA>
+#> 798    ND Female    White $50k-$100k Some college       Married        Trump
+#> 799    AR Female    White Under $50k  High school Never married         <NA>
+#> 800    WI   Male    White Over $100k   Bachelor's       Married       Harris
+#> 801    ND   Male    White Over $100k Some college       Married        Trump
+#> 802    TN Female    White Over $100k   Bachelor's       Married         <NA>
+#> 803  <NA>   Male Hispanic Over $100k         <NA>          <NA>         <NA>
+#> 804    TX   Male    Other $50k-$100k  High school          <NA>         <NA>
+#> 805    CA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 806    SC   Male    Black $50k-$100k Some college     Separated       Harris
+#> 807  <NA>   Male Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 808    AL Female    White Over $100k   Bachelor's       Married         <NA>
+#> 809    FL   Male    White Over $100k         <NA>     Separated         <NA>
+#> 810    KY Female    White       <NA>   Bachelor's       Married       Harris
+#> 811    TX Female Hispanic Under $50k Less than HS          <NA>       Harris
+#> 812    OR   Male    White $50k-$100k  High school       Married       Harris
+#> 813    NY Female    White Over $100k   Bachelor's       Married        Trump
+#> 814  <NA> Female Hispanic Over $100k         <NA>          <NA>         <NA>
+#> 815    TX Female    Black       <NA>         <NA>     Separated       Harris
+#> 816    AR Female    White Over $100k Less than HS       Married        Trump
+#> 817    MN   Male    White Under $50k         <NA>          <NA>       Harris
+#> 818    AL   Male    Other $50k-$100k Some college Never married        Trump
+#> 819    UT Female    White $50k-$100k         <NA>          <NA>        Trump
+#> 820  <NA> Female    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 821    OR Female    White Over $100k         <NA>     Separated       Harris
+#> 822    IL Female     <NA> Over $100k Some college       Married       Harris
+#> 823    NY Female    Black Over $100k     Graduate       Married       Harris
+#> 824    TX Female Hispanic Under $50k Some college       Married       Harris
+#> 825    SC   Male    Other Under $50k         <NA>          <NA>        Trump
+#> 826    CT   Male    White Over $100k     Graduate       Married       Harris
+#> 827    UT   Male    White Over $100k     Graduate       Married        Trump
+#> 828    TX   Male    Black Under $50k  High school       Married        Trump
+#> 829    FL Female Hispanic Over $100k     Graduate       Married       Harris
+#> 830    PA Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 831    MN Female    White $50k-$100k  High school       Married        Trump
+#> 832  <NA>   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 833    MD Female    Black $50k-$100k         <NA>     Separated       Harris
+#> 834  <NA>   Male Hispanic $50k-$100k         <NA>          <NA>         <NA>
+#> 835    MO   Male    White Over $100k  High school       Married        Trump
+#> 836    MI Female    Black Over $100k         <NA>     Separated       Harris
+#> 837    OR Female    White Under $50k         <NA>      Divorced       Harris
+#> 838    GA Female    White       <NA>         <NA>      Divorced        Trump
+#> 839    AL Female    White Under $50k Some college       Married       Harris
+#> 840    PA   <NA>    White       <NA>   Bachelor's       Married         <NA>
+#> 841    NJ Female    White       <NA>         <NA>     Separated         <NA>
+#> 842    CT   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 843    TX Female    White Over $100k   Bachelor's       Married       Harris
+#> 844    TX   Male    Black Over $100k   Bachelor's       Married       Harris
+#> 845    SC   Male    Other Under $50k         <NA>          <NA>         <NA>
+#> 846    CA   Male    White Over $100k   Bachelor's       Widowed        Trump
+#> 847    PA Female    White Over $100k         <NA>      Divorced         <NA>
+#> 848  <NA>   Male Hispanic Over $100k Some college       Married        Trump
+#> 849    CT Female    White Over $100k Some college       Married        Trump
+#> 850    NY Female    White Over $100k   Bachelor's       Married       Harris
+#> 851  <NA>   Male    White $50k-$100k Some college       Married        Trump
+#> 852    TX   Male    White Over $100k   Bachelor's       Married        Trump
+#> 853    CA   Male    Asian $50k-$100k  High school       Married         <NA>
+#> 854    AZ   Male    Black Under $50k         <NA>     Separated       Harris
+#> 855    IN   Male    White $50k-$100k     Graduate     Separated       Harris
+#> 856    OR Female    White Over $100k Some college       Married        Trump
+#> 857    FL Female Hispanic Over $100k         <NA> Never married        Trump
+#> 858    MO Female    White $50k-$100k         <NA>      Divorced         <NA>
+#> 859    CO   Male    Black Over $100k         <NA>     Separated       Harris
+#> 860    MN Female     <NA> Under $50k Some college       Married        Trump
+#> 861    SC   Male    White $50k-$100k         <NA>     Separated         <NA>
+#> 862    TX Female    White Over $100k   Bachelor's       Widowed       Harris
+#> 863    SC Female    White Over $100k         <NA>     Separated        Trump
+#> 864    TN Female    White Under $50k         <NA>      Divorced       Harris
+#> 865    MI Female    White $50k-$100k Some college          <NA>         <NA>
+#> 866  <NA>   Male Hispanic       <NA>         <NA>          <NA>         <NA>
+#> 867    IN   Male    White $50k-$100k  High school       Married         <NA>
+#> 868    CT Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 869    TX Female Hispanic Under $50k Some college          <NA>       Harris
+#> 870    CA Female    White Over $100k     Graduate       Married       Harris
+#> 871    GA   Male    White $50k-$100k         <NA>      Divorced        Trump
+#> 872  <NA> Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 873    NJ   Male    White $50k-$100k         <NA>      Divorced         <NA>
+#> 874    MO   Male    White Under $50k   Bachelor's       Married        Trump
+#> 875    VA   Male    White $50k-$100k         <NA>      Divorced        Trump
+#> 876    SC Female    White Under $50k         <NA>     Separated         <NA>
+#> 877    IA   Male    White Over $100k   Bachelor's       Married        Trump
+#> 878  <NA> Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 879    CO Female    Other Under $50k Less than HS          <NA>        Trump
+#> 880    TN   Male    White $50k-$100k Some college       Married        Trump
+#> 881    ND Female    White       <NA> Some college       Married        Trump
+#> 882    OR Female    White $50k-$100k         <NA>      Divorced        Trump
+#> 883    FL   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 884    TX   Male Hispanic $50k-$100k Less than HS       Married         <NA>
+#> 885    TN   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 886  <NA>   Male    White Over $100k   Bachelor's       Married       Harris
+#> 887    PA Female Hispanic $50k-$100k Less than HS          <NA>       Harris
+#> 888    VA Female    Other Under $50k         <NA>     Separated         <NA>
+#> 889    NC Female    White Over $100k     Graduate       Married        Trump
+#> 890    IA   Male    White Over $100k   Bachelor's       Married       Harris
+#> 891    SC   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 892    IL   Male    White Over $100k   Bachelor's       Married        Trump
+#> 893    MD Female    Black Under $50k         <NA>     Separated         <NA>
+#> 894    UT Female    White       <NA>         <NA>      Divorced        Trump
+#> 895    UT Female    White Under $50k         <NA>      Divorced        Trump
+#> 896    AR   Male    Black Under $50k         <NA> Never married         <NA>
+#> 897    OR   Male    White Under $50k         <NA>     Separated        Trump
+#> 898    TX Female    White Over $100k   Bachelor's          <NA>         <NA>
+#> 899    NY Female    White Over $100k         <NA>      Divorced       Harris
+#> 900    AZ   Male    White Over $100k  High school       Widowed        Trump
+#> 901    CA Female    Other Under $50k  High school       Married       Harris
+#> 902    TX Female Hispanic Under $50k         <NA> Never married       Harris
+#> 903  <NA>   Male     <NA> Under $50k         <NA>       Married         <NA>
+#> 904    MN   Male    White Over $100k Some college       Married        Trump
+#> 905    AR   Male    Other $50k-$100k         <NA>          <NA>        Trump
+#> 906    CA Female    White Over $100k         <NA>          <NA>       Harris
+#> 907    UT Female    White Over $100k     Graduate       Married       Harris
+#> 908    TX Female    White Under $50k         <NA>          <NA>       Harris
+#> 909    CA Female    White Under $50k         <NA>     Separated       Harris
+#> 910    OR Female    White $50k-$100k         <NA>     Separated       Harris
+#> 911    MO   Male    Other $50k-$100k         <NA>          <NA>       Harris
+#> 912    MO   Male    White Over $100k   Bachelor's       Widowed        Trump
+#> 913    IN   Male    White $50k-$100k         <NA>          <NA>        Trump
+#> 914  <NA> Female    White       <NA>         <NA>     Separated         <NA>
+#> 915    CA Female    White Under $50k Some college       Married       Harris
+#> 916    TX   Male Hispanic $50k-$100k  High school       Married       Harris
+#> 917    CA   Male Hispanic Over $100k         <NA>     Separated         <NA>
+#> 918  <NA>   Male Hispanic Over $100k         <NA>          <NA>         <NA>
+#> 919    IA   Male    White Under $50k         <NA>     Separated        Trump
+#> 920    NY Female    White Over $100k Some college       Married       Harris
+#> 921    AL   Male    White Under $50k         <NA>      Divorced         <NA>
+#> 922    UT Female    White $50k-$100k  High school       Married         <NA>
+#> 923    NY Female    White $50k-$100k         <NA>     Separated       Harris
+#> 924    WA   Male    White Over $100k         <NA>          <NA>         <NA>
+#> 925    MI   Male    White Under $50k         <NA>          <NA>         <NA>
+#> 926    NY   Male Hispanic Under $50k Some college       Married       Harris
+#> 927    CA Female    Asian Over $100k   Bachelor's          <NA>       Harris
+#> 928  <NA> Female    White Under $50k         <NA> Never married         <NA>
+#> 929    IL   Male    Black $50k-$100k         <NA>          <NA>         <NA>
+#> 930    AL Female    White Over $100k  High school       Married        Trump
+#> 931    KY   Male    Black $50k-$100k   Bachelor's       Married       Harris
+#> 932    OR Female    White Over $100k         <NA>          <NA>       Harris
+#> 933  <NA>   Male    Black Over $100k         <NA>          <NA>         <NA>
+#> 934    IA   Male    White Under $50k         <NA>      Divorced        Trump
+#> 935    TX   Male Hispanic $50k-$100k         <NA>       Married         <NA>
+#> 936  <NA> Female Hispanic Under $50k  High school       Married         <NA>
+#> 937    IL Female    Other Under $50k         <NA>          <NA>         <NA>
+#> 938    OR Female    Asian Over $100k Some college       Married       Harris
+#> 939    NJ   Male    Black $50k-$100k         <NA>          <NA>       Harris
+#> 940    MA   Male    White Over $100k     Graduate       Married         <NA>
+#> 941    OR   Male    White Under $50k         <NA>          <NA>       Harris
+#> 942  <NA>   Male    Other $50k-$100k   Bachelor's       Married         <NA>
+#> 943  <NA> Female    White Under $50k         <NA>      Divorced         <NA>
+#> 944  <NA>   Male    White Over $100k  High school       Married         <NA>
+#> 945    IA   Male    White Over $100k  High school       Married       Harris
+#> 946  <NA>   Male    Other $50k-$100k  High school     Separated         <NA>
+#> 947    FL Female    White $50k-$100k   Bachelor's       Married         <NA>
+#> 948    TX Female Hispanic Under $50k Less than HS       Married         <NA>
+#> 949    GA   Male    White $50k-$100k         <NA>      Divorced       Harris
+#> 950    VA   Male    White Under $50k         <NA>          <NA>        Trump
+#> 951    CT   Male    White $50k-$100k  High school       Married       Harris
+#> 952    AR Female Hispanic Under $50k         <NA>          <NA>         <NA>
+#> 953    TN Female    Other $50k-$100k         <NA>     Separated         <NA>
+#> 954    CA Female    White $50k-$100k  High school       Married       Harris
+#> 955    OR   Male    White $50k-$100k  High school       Married         <NA>
+#> 956    ND   Male Hispanic $50k-$100k  High school       Married         <NA>
+#> 957    IA Female    White Under $50k         <NA>     Separated         <NA>
+#> 958    AR   Male    White       <NA>  High school       Married         <NA>
+#> 959  <NA> Female    White Under $50k         <NA>      Divorced         <NA>
+#> 960    FL   Male    White $50k-$100k         <NA>      Divorced         <NA>
+#> 961    IL Female    White Over $100k  High school       Married         <NA>
+#> 962    CO Female Hispanic Under $50k         <NA>      Divorced       Harris
+#> 963    CA Female     <NA> Under $50k Some college       Married         <NA>
+#> 964    MN Female    White $50k-$100k Some college       Married       Harris
+#> 965    VA Female    Black $50k-$100k  High school       Married         <NA>
+#> 966    TN Female    White Over $100k Some college       Married        Trump
+#>        region
+#> 1        West
+#> 2        West
+#> 3       South
+#> 4   Northeast
+#> 5        West
+#> 6       South
+#> 7       South
+#> 8       South
+#> 9        West
+#> 10      South
+#> 11      South
+#> 12      South
+#> 13       West
+#> 14       West
+#> 15      South
+#> 16       West
+#> 17       West
+#> 18    Midwest
+#> 19      South
+#> 20       <NA>
+#> 21       West
+#> 22       <NA>
+#> 23       West
+#> 24       <NA>
+#> 25      South
+#> 26      South
+#> 27      South
+#> 28       West
+#> 29    Midwest
+#> 30  Northeast
+#> 31       West
+#> 32      South
+#> 33  Northeast
+#> 34      South
+#> 35  Northeast
+#> 36       <NA>
+#> 37  Northeast
+#> 38       <NA>
+#> 39      South
+#> 40      South
+#> 41       West
+#> 42      South
+#> 43       West
+#> 44      South
+#> 45    Midwest
+#> 46  Northeast
+#> 47    Midwest
+#> 48       West
+#> 49      South
+#> 50       West
+#> 51      South
+#> 52       West
+#> 53    Midwest
+#> 54  Northeast
+#> 55       West
+#> 56      South
+#> 57  Northeast
+#> 58  Northeast
+#> 59      South
+#> 60      South
+#> 61    Midwest
+#> 62       West
+#> 63    Midwest
+#> 64       West
+#> 65      South
+#> 66      South
+#> 67      South
+#> 68    Midwest
+#> 69      South
+#> 70      South
+#> 71       <NA>
+#> 72      South
+#> 73       West
+#> 74    Midwest
+#> 75       West
+#> 76  Northeast
+#> 77    Midwest
+#> 78       West
+#> 79    Midwest
+#> 80      South
+#> 81      South
+#> 82    Midwest
+#> 83    Midwest
+#> 84    Midwest
+#> 85      South
+#> 86      South
+#> 87       West
+#> 88      South
+#> 89       West
+#> 90       <NA>
+#> 91       West
+#> 92    Midwest
+#> 93       West
+#> 94    Midwest
+#> 95    Midwest
+#> 96    Midwest
+#> 97      South
+#> 98      South
+#> 99      South
+#> 100     South
+#> 101     South
+#> 102      West
+#> 103      West
+#> 104     South
+#> 105 Northeast
+#> 106     South
+#> 107      West
+#> 108   Midwest
+#> 109     South
+#> 110 Northeast
+#> 111   Midwest
+#> 112   Midwest
+#> 113 Northeast
+#> 114     South
+#> 115      <NA>
+#> 116     South
+#> 117     South
+#> 118   Midwest
+#> 119     South
+#> 120 Northeast
+#> 121   Midwest
+#> 122     South
+#> 123 Northeast
+#> 124 Northeast
+#> 125 Northeast
+#> 126     South
+#> 127 Northeast
+#> 128   Midwest
+#> 129   Midwest
+#> 130   Midwest
+#> 131     South
+#> 132      West
+#> 133   Midwest
+#> 134     South
+#> 135     South
+#> 136   Midwest
+#> 137   Midwest
+#> 138     South
+#> 139   Midwest
+#> 140     South
+#> 141 Northeast
+#> 142     South
+#> 143 Northeast
+#> 144      West
+#> 145     South
+#> 146   Midwest
+#> 147   Midwest
+#> 148      West
+#> 149   Midwest
+#> 150     South
+#> 151     South
+#> 152      West
+#> 153 Northeast
+#> 154   Midwest
+#> 155      <NA>
+#> 156      West
+#> 157      West
+#> 158      <NA>
+#> 159      West
+#> 160      <NA>
+#> 161     South
+#> 162      West
+#> 163   Midwest
+#> 164   Midwest
+#> 165     South
+#> 166     South
+#> 167      <NA>
+#> 168      <NA>
+#> 169      West
+#> 170 Northeast
+#> 171   Midwest
+#> 172     South
+#> 173      West
+#> 174     South
+#> 175     South
+#> 176 Northeast
+#> 177      West
+#> 178     South
+#> 179 Northeast
+#> 180     South
+#> 181     South
+#> 182      West
+#> 183 Northeast
+#> 184 Northeast
+#> 185     South
+#> 186   Midwest
+#> 187      <NA>
+#> 188   Midwest
+#> 189      <NA>
+#> 190      West
+#> 191      <NA>
+#> 192     South
+#> 193 Northeast
+#> 194     South
+#> 195   Midwest
+#> 196      West
+#> 197     South
+#> 198 Northeast
+#> 199   Midwest
+#> 200      <NA>
+#> 201      West
+#> 202      West
+#> 203   Midwest
+#> 204     South
+#> 205      West
+#> 206   Midwest
+#> 207   Midwest
+#> 208      <NA>
+#> 209      West
+#> 210     South
+#> 211      West
+#> 212   Midwest
+#> 213   Midwest
+#> 214 Northeast
+#> 215     South
+#> 216   Midwest
+#> 217     South
+#> 218      West
+#> 219     South
+#> 220      <NA>
+#> 221 Northeast
+#> 222     South
+#> 223     South
+#> 224      West
+#> 225   Midwest
+#> 226     South
+#> 227      West
+#> 228      West
+#> 229   Midwest
+#> 230      West
+#> 231      <NA>
+#> 232      West
+#> 233     South
+#> 234 Northeast
+#> 235     South
+#> 236     South
+#> 237      <NA>
+#> 238     South
+#> 239      West
+#> 240     South
+#> 241      West
+#> 242   Midwest
+#> 243   Midwest
+#> 244 Northeast
+#> 245   Midwest
+#> 246      West
+#> 247      West
+#> 248   Midwest
+#> 249     South
+#> 250     South
+#> 251   Midwest
+#> 252      <NA>
+#> 253     South
+#> 254 Northeast
+#> 255      <NA>
+#> 256      West
+#> 257   Midwest
+#> 258     South
+#> 259      West
+#> 260      West
+#> 261 Northeast
+#> 262     South
+#> 263      West
+#> 264   Midwest
+#> 265      West
+#> 266     South
+#> 267      West
+#> 268      <NA>
+#> 269   Midwest
+#> 270   Midwest
+#> 271     South
+#> 272      <NA>
+#> 273     South
+#> 274      West
+#> 275 Northeast
+#> 276      <NA>
+#> 277   Midwest
+#> 278     South
+#> 279     South
+#> 280      West
+#> 281     South
+#> 282   Midwest
+#> 283      West
+#> 284   Midwest
+#> 285   Midwest
+#> 286      West
+#> 287     South
+#> 288     South
+#> 289      West
+#> 290 Northeast
+#> 291      West
+#> 292   Midwest
+#> 293      West
+#> 294      West
+#> 295   Midwest
+#> 296     South
+#> 297 Northeast
+#> 298     South
+#> 299     South
+#> 300 Northeast
+#> 301   Midwest
+#> 302      West
+#> 303   Midwest
+#> 304     South
+#> 305     South
+#> 306      West
+#> 307   Midwest
+#> 308      West
+#> 309     South
+#> 310   Midwest
+#> 311     South
+#> 312 Northeast
+#> 313      West
+#> 314     South
+#> 315   Midwest
+#> 316   Midwest
+#> 317   Midwest
+#> 318     South
+#> 319   Midwest
+#> 320     South
+#> 321     South
+#> 322      West
+#> 323     South
+#> 324      West
+#> 325     South
+#> 326   Midwest
+#> 327      West
+#> 328   Midwest
+#> 329   Midwest
+#> 330     South
+#> 331     South
+#> 332      <NA>
+#> 333   Midwest
+#> 334   Midwest
+#> 335     South
+#> 336      <NA>
+#> 337      <NA>
+#> 338     South
+#> 339      West
+#> 340   Midwest
+#> 341 Northeast
+#> 342 Northeast
+#> 343     South
+#> 344   Midwest
+#> 345     South
+#> 346      West
+#> 347     South
+#> 348     South
+#> 349     South
+#> 350      West
+#> 351   Midwest
+#> 352 Northeast
+#> 353      West
+#> 354     South
+#> 355     South
+#> 356      West
+#> 357      <NA>
+#> 358   Midwest
+#> 359     South
+#> 360     South
+#> 361     South
+#> 362   Midwest
+#> 363     South
+#> 364   Midwest
+#> 365      West
+#> 366   Midwest
+#> 367   Midwest
+#> 368   Midwest
+#> 369     South
+#> 370     South
+#> 371      <NA>
+#> 372      West
+#> 373     South
+#> 374      West
+#> 375   Midwest
+#> 376      West
+#> 377     South
+#> 378     South
+#> 379     South
+#> 380     South
+#> 381   Midwest
+#> 382   Midwest
+#> 383      <NA>
+#> 384 Northeast
+#> 385     South
+#> 386 Northeast
+#> 387 Northeast
+#> 388   Midwest
+#> 389   Midwest
+#> 390      West
+#> 391      West
+#> 392     South
+#> 393 Northeast
+#> 394      West
+#> 395   Midwest
+#> 396   Midwest
+#> 397 Northeast
+#> 398      West
+#> 399     South
+#> 400      West
+#> 401      <NA>
+#> 402     South
+#> 403      West
+#> 404 Northeast
+#> 405     South
+#> 406     South
+#> 407      West
+#> 408     South
+#> 409     South
+#> 410   Midwest
+#> 411      <NA>
+#> 412 Northeast
+#> 413   Midwest
+#> 414     South
+#> 415   Midwest
+#> 416      West
+#> 417     South
+#> 418     South
+#> 419      West
+#> 420   Midwest
+#> 421      West
+#> 422      West
+#> 423     South
+#> 424      West
+#> 425 Northeast
+#> 426     South
+#> 427   Midwest
+#> 428     South
+#> 429      <NA>
+#> 430      West
+#> 431 Northeast
+#> 432     South
+#> 433     South
+#> 434   Midwest
+#> 435      <NA>
+#> 436      West
+#> 437      <NA>
+#> 438 Northeast
+#> 439     South
+#> 440   Midwest
+#> 441   Midwest
+#> 442      West
+#> 443      West
+#> 444     South
+#> 445   Midwest
+#> 446     South
+#> 447      West
+#> 448     South
+#> 449   Midwest
+#> 450   Midwest
+#> 451   Midwest
+#> 452      <NA>
+#> 453   Midwest
+#> 454   Midwest
+#> 455 Northeast
+#> 456   Midwest
+#> 457     South
+#> 458      West
+#> 459     South
+#> 460   Midwest
+#> 461   Midwest
+#> 462      West
+#> 463 Northeast
+#> 464     South
+#> 465   Midwest
+#> 466     South
+#> 467   Midwest
+#> 468      West
+#> 469      West
+#> 470      <NA>
+#> 471      West
+#> 472      West
+#> 473 Northeast
+#> 474      West
+#> 475 Northeast
+#> 476      West
+#> 477   Midwest
+#> 478     South
+#> 479      <NA>
+#> 480     South
+#> 481   Midwest
+#> 482 Northeast
+#> 483      West
+#> 484     South
+#> 485      West
+#> 486     South
+#> 487     South
+#> 488      <NA>
+#> 489   Midwest
+#> 490      West
+#> 491 Northeast
+#> 492   Midwest
+#> 493     South
+#> 494     South
+#> 495 Northeast
+#> 496   Midwest
+#> 497     South
+#> 498     South
+#> 499   Midwest
+#> 500     South
+#> 501      <NA>
+#> 502     South
+#> 503      <NA>
+#> 504   Midwest
+#> 505 Northeast
+#> 506      West
+#> 507      West
+#> 508      <NA>
+#> 509      <NA>
+#> 510      <NA>
+#> 511      West
+#> 512     South
+#> 513      West
+#> 514     South
+#> 515      West
+#> 516   Midwest
+#> 517 Northeast
+#> 518      <NA>
+#> 519 Northeast
+#> 520      West
+#> 521     South
+#> 522   Midwest
+#> 523      West
+#> 524      <NA>
+#> 525   Midwest
+#> 526      <NA>
+#> 527   Midwest
+#> 528   Midwest
+#> 529 Northeast
+#> 530 Northeast
+#> 531      West
+#> 532   Midwest
+#> 533   Midwest
+#> 534      West
+#> 535      West
+#> 536      <NA>
+#> 537     South
+#> 538     South
+#> 539   Midwest
+#> 540   Midwest
+#> 541      West
+#> 542     South
+#> 543     South
+#> 544     South
+#> 545     South
+#> 546     South
+#> 547      West
+#> 548 Northeast
+#> 549     South
+#> 550      West
+#> 551      <NA>
+#> 552      West
+#> 553      West
+#> 554      West
+#> 555 Northeast
+#> 556     South
+#> 557     South
+#> 558     South
+#> 559      West
+#> 560     South
+#> 561 Northeast
+#> 562     South
+#> 563     South
+#> 564     South
+#> 565     South
+#> 566     South
+#> 567   Midwest
+#> 568 Northeast
+#> 569      West
+#> 570   Midwest
+#> 571     South
+#> 572      <NA>
+#> 573      <NA>
+#> 574   Midwest
+#> 575   Midwest
+#> 576   Midwest
+#> 577     South
+#> 578   Midwest
+#> 579 Northeast
+#> 580     South
+#> 581     South
+#> 582      West
+#> 583   Midwest
+#> 584     South
+#> 585      West
+#> 586 Northeast
+#> 587      West
+#> 588      <NA>
+#> 589      West
+#> 590 Northeast
+#> 591     South
+#> 592      West
+#> 593   Midwest
+#> 594      <NA>
+#> 595      <NA>
+#> 596   Midwest
+#> 597   Midwest
+#> 598      West
+#> 599 Northeast
+#> 600   Midwest
+#> 601     South
+#> 602      West
+#> 603      West
+#> 604      West
+#> 605     South
+#> 606      West
+#> 607   Midwest
+#> 608     South
+#> 609      West
+#> 610     South
+#> 611     South
+#> 612   Midwest
+#> 613 Northeast
+#> 614   Midwest
+#> 615     South
+#> 616     South
+#> 617      West
+#> 618   Midwest
+#> 619      West
+#> 620      <NA>
+#> 621     South
+#> 622   Midwest
+#> 623 Northeast
+#> 624      West
+#> 625   Midwest
+#> 626      <NA>
+#> 627   Midwest
+#> 628     South
+#> 629      West
+#> 630   Midwest
+#> 631     South
+#> 632      West
+#> 633     South
+#> 634     South
+#> 635      West
+#> 636   Midwest
+#> 637      West
+#> 638     South
+#> 639 Northeast
+#> 640 Northeast
+#> 641     South
+#> 642      <NA>
+#> 643      West
+#> 644 Northeast
+#> 645   Midwest
+#> 646     South
+#> 647     South
+#> 648     South
+#> 649     South
+#> 650 Northeast
+#> 651     South
+#> 652 Northeast
+#> 653     South
+#> 654   Midwest
+#> 655      <NA>
+#> 656      <NA>
+#> 657     South
+#> 658   Midwest
+#> 659      West
+#> 660   Midwest
+#> 661     South
+#> 662     South
+#> 663     South
+#> 664     South
+#> 665   Midwest
+#> 666      West
+#> 667   Midwest
+#> 668      West
+#> 669 Northeast
+#> 670     South
+#> 671 Northeast
+#> 672      West
+#> 673      <NA>
+#> 674      West
+#> 675     South
+#> 676     South
+#> 677      <NA>
+#> 678     South
+#> 679   Midwest
+#> 680   Midwest
+#> 681      <NA>
+#> 682     South
+#> 683     South
+#> 684     South
+#> 685   Midwest
+#> 686     South
+#> 687   Midwest
+#> 688      West
+#> 689 Northeast
+#> 690   Midwest
+#> 691      West
+#> 692   Midwest
+#> 693   Midwest
+#> 694     South
+#> 695 Northeast
+#> 696   Midwest
+#> 697     South
+#> 698   Midwest
+#> 699     South
+#> 700 Northeast
+#> 701     South
+#> 702      West
+#> 703      <NA>
+#> 704     South
+#> 705      West
+#> 706   Midwest
+#> 707 Northeast
+#> 708      <NA>
+#> 709     South
+#> 710 Northeast
+#> 711   Midwest
+#> 712      <NA>
+#> 713      <NA>
+#> 714   Midwest
+#> 715   Midwest
+#> 716      <NA>
+#> 717      <NA>
+#> 718      <NA>
+#> 719     South
+#> 720      <NA>
+#> 721      <NA>
+#> 722      West
+#> 723      West
+#> 724 Northeast
+#> 725     South
+#> 726      <NA>
+#> 727      <NA>
+#> 728   Midwest
+#> 729      <NA>
+#> 730     South
+#> 731 Northeast
+#> 732     South
+#> 733      <NA>
+#> 734   Midwest
+#> 735     South
+#> 736     South
+#> 737   Midwest
+#> 738      West
+#> 739     South
+#> 740      West
+#> 741 Northeast
+#> 742 Northeast
+#> 743      <NA>
+#> 744     South
+#> 745     South
+#> 746   Midwest
+#> 747     South
+#> 748      West
+#> 749      West
+#> 750     South
+#> 751      <NA>
+#> 752      West
+#> 753   Midwest
+#> 754     South
+#> 755      West
+#> 756 Northeast
+#> 757      West
+#> 758 Northeast
+#> 759 Northeast
+#> 760   Midwest
+#> 761      West
+#> 762      <NA>
+#> 763     South
+#> 764     South
+#> 765      West
+#> 766     South
+#> 767   Midwest
+#> 768      West
+#> 769      West
+#> 770     South
+#> 771     South
+#> 772     South
+#> 773      <NA>
+#> 774      West
+#> 775 Northeast
+#> 776   Midwest
+#> 777   Midwest
+#> 778     South
+#> 779      West
+#> 780     South
+#> 781     South
+#> 782     South
+#> 783 Northeast
+#> 784     South
+#> 785 Northeast
+#> 786     South
+#> 787     South
+#> 788      <NA>
+#> 789     South
+#> 790   Midwest
+#> 791      West
+#> 792 Northeast
+#> 793     South
+#> 794     South
+#> 795     South
+#> 796 Northeast
+#> 797      <NA>
+#> 798   Midwest
+#> 799     South
+#> 800   Midwest
+#> 801   Midwest
+#> 802     South
+#> 803      <NA>
+#> 804     South
+#> 805      West
+#> 806     South
+#> 807      <NA>
+#> 808     South
+#> 809     South
+#> 810     South
+#> 811     South
+#> 812      West
+#> 813 Northeast
+#> 814      <NA>
+#> 815     South
+#> 816     South
+#> 817   Midwest
+#> 818     South
+#> 819      West
+#> 820      <NA>
+#> 821      West
+#> 822   Midwest
+#> 823 Northeast
+#> 824     South
+#> 825     South
+#> 826 Northeast
+#> 827      West
+#> 828     South
+#> 829     South
+#> 830 Northeast
+#> 831   Midwest
+#> 832      <NA>
+#> 833     South
+#> 834      <NA>
+#> 835   Midwest
+#> 836   Midwest
+#> 837      West
+#> 838     South
+#> 839     South
+#> 840 Northeast
+#> 841 Northeast
+#> 842 Northeast
+#> 843     South
+#> 844     South
+#> 845     South
+#> 846      West
+#> 847 Northeast
+#> 848      <NA>
+#> 849 Northeast
+#> 850 Northeast
+#> 851      <NA>
+#> 852     South
+#> 853      West
+#> 854      West
+#> 855   Midwest
+#> 856      West
+#> 857     South
+#> 858   Midwest
+#> 859      West
+#> 860   Midwest
+#> 861     South
+#> 862     South
+#> 863     South
+#> 864     South
+#> 865   Midwest
+#> 866      <NA>
+#> 867   Midwest
+#> 868 Northeast
+#> 869     South
+#> 870      West
+#> 871     South
+#> 872      <NA>
+#> 873 Northeast
+#> 874   Midwest
+#> 875     South
+#> 876     South
+#> 877   Midwest
+#> 878      <NA>
+#> 879      West
+#> 880     South
+#> 881   Midwest
+#> 882      West
+#> 883     South
+#> 884     South
+#> 885     South
+#> 886      <NA>
+#> 887 Northeast
+#> 888     South
+#> 889     South
+#> 890   Midwest
+#> 891     South
+#> 892   Midwest
+#> 893     South
+#> 894      West
+#> 895      West
+#> 896     South
+#> 897      West
+#> 898     South
+#> 899 Northeast
+#> 900      West
+#> 901      West
+#> 902     South
+#> 903      <NA>
+#> 904   Midwest
+#> 905     South
+#> 906      West
+#> 907      West
+#> 908     South
+#> 909      West
+#> 910      West
+#> 911   Midwest
+#> 912   Midwest
+#> 913   Midwest
+#> 914      <NA>
+#> 915      West
+#> 916     South
+#> 917      West
+#> 918      <NA>
+#> 919   Midwest
+#> 920 Northeast
+#> 921     South
+#> 922      West
+#> 923 Northeast
+#> 924      West
+#> 925   Midwest
+#> 926 Northeast
+#> 927      West
+#> 928      <NA>
+#> 929   Midwest
+#> 930     South
+#> 931     South
+#> 932      West
+#> 933      <NA>
+#> 934   Midwest
+#> 935     South
+#> 936      <NA>
+#> 937   Midwest
+#> 938      West
+#> 939 Northeast
+#> 940 Northeast
+#> 941      West
+#> 942      <NA>
+#> 943      <NA>
+#> 944      <NA>
+#> 945   Midwest
+#> 946      <NA>
+#> 947     South
+#> 948     South
+#> 949     South
+#> 950     South
+#> 951 Northeast
+#> 952     South
+#> 953     South
+#> 954      West
+#> 955      West
+#> 956   Midwest
+#> 957   Midwest
+#> 958     South
+#> 959      <NA>
+#> 960     South
+#> 961   Midwest
+#> 962      West
+#> 963      West
+#> 964   Midwest
+#> 965     South
+#> 966     South
+```
+
+## Step 1: Check levels and missingness
+
+Before writing targets, inspect the levels in your sample and see where
+values are missing:
+
+``` r
+table(anes24$sex, useNA = 'ifany')
+#> 
+#> Female   Male   <NA> 
+#>    503    458      5
+table(anes24$race, useNA = 'ifany')
+#> 
+#>    Asian    Black Hispanic    Other    White     <NA> 
+#>       28      118      114       63      632       11
+table(anes24$income, useNA = 'ifany')
+#> 
+#> $50k-$100k Over $100k Under $50k       <NA> 
+#>        300        389        230         47
+table(anes24$region, useNA = 'ifany')
+#> 
+#>   Midwest Northeast     South      West      <NA> 
+#>       209       118       319       214       106
+
+colSums(is.na(anes24[c('sex', 'race', 'income', 'region')]))
+#>    sex   race income region 
+#>      5     11     47    106
+```
+
+When you define targets, the target names must match the data values
+exactly. `NA` values are ignored for that variable during raking.
+
+## Step 2: Define population targets
+
+Targets are a named list of named numeric vectors. Each vector’s names
+must match the levels in your data, and the values should be proportions
+summing to 1.
+
+``` r
+targets <- list(
+  sex = c(Male = 0.472, Female = 0.528),
+  race = c(
+    White = 0.706,
+    Black = 0.121,
+    Hispanic = 0.107,
+    Asian = 0.047,
+    Other = 0.019
+  ),
+  income = c(
+    'Under $50k' = 0.151,
+    '$50k-$100k' = 0.294,
+    'Over $100k' = 0.555
+  )
+)
+```
+
+If your targets don’t sum to 1, `ipf` will normalize them automatically
+with a warning.
+
+## Step 3: Rake
+
+The main function is
+[`rake()`](http://christophertkenny.com/ipf/reference/rake.md):
+
+``` r
+result <- rake(anes24, targets, cap = NULL)
+result
+#> 
+#> ── Raking result (ipf)
+#> Converged: Yes (695 iterations, max prop err = 9.83e-07)
+#> Variables raked: "sex", "race", and "income"
+#> Design effect: 1.176 | Effective n: 822 / 966
+#> Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424
+```
+
+That’s it — `result` is an `ipf_rake` object containing the weights and
+diagnostics.
+
+If you already have design weights, pass them through `base_weights`:
+
+``` r
+base_w <- ifelse(anes24$sex == 'Female', 1.1, 0.9)
+base_w[is.na(base_w)] <- 1
+
+base_weighted <- rake(anes24, targets, base_weights = base_w, cap = NULL)
+base_weighted
+#> 
+#> ── Raking result (ipf)
+#> Converged: Yes (696 iterations, max prop err = 9.87e-07)
+#> Variables raked: "sex", "race", and "income"
+#> Design effect: 1.176 | Effective n: 822 / 966
+#> Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424
+```
+
+## Step 4: Inspect results
+
+### Design effect
+
+The design effect measures how much the weighting inflates variance. A
+deff of 1.0 means no inflation (uniform weights); higher values mean
+less effective data.
+
+``` r
+design_effect(result$weights)
+#> $deff
+#> [1] 1.175752
+#> 
+#> $n_eff
+#> [1] 821.602
+```
+
+### Per-variable diagnostics
+
+[`summary()`](https://rdrr.io/r/base/summary.html) shows a full
+diagnostic report:
+
+``` r
+summary(result)
+#> 
+#> ── Raking Summary (ipf)
+#> ────────────────────────────────────────────────────────────────────────────────
+#> ✔ Converged in 695 iterations (max prop err = 9.83e-07)
+#> ℹ No base weights (uniform)
+#> ℹ Selection: type = "nolim", method = "total"
+#> ℹ Variables raked: "sex", "race", and "income"
+#> ── Weight Summary ──────────────────────────────────────────────────────────────
+#> Min: 0.0505 Q1: 0.6768 Median: 1.0292 Mean: 1.0104 Q3: 1.3194 Max: 3.793
+#> SD: 0.4236 CV: 0.4192
+#> ── Design Effect ───────────────────────────────────────────────────────────────
+#> Deff: 1.1758 | Effective n: 822 / 966
+#> ── Per-Variable Assessment ─────────────────────────────────────────────────────
+#> 
+#> ── sex
+#> # A tibble: 3 × 9
+#>   level  target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
+#>   <chr>   <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
+#> 1 Male    0.472          458          0.477       456.        0.472   -0.00459
+#> 2 Female  0.528          503          0.523       510.        0.528    0.00459
+#> 3 Total   1              961          1           966.        1.000    0.00917
+#> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
+#> 
+#> ── race
+#> # A tibble: 6 × 9
+#>   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
+#>   <chr>     <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
+#> 1 White     0.706          632         0.662       682.        0.706     0.0442 
+#> 2 Black     0.121          118         0.124       117.        0.121    -0.00256
+#> 3 Hispanic  0.107          114         0.119       103.        0.107    -0.0124 
+#> 4 Asian     0.047           28         0.0293       45.4       0.0470    0.0177 
+#> 5 Other     0.019           63         0.0660       18.4       0.0190   -0.0470 
+#> 6 Total     1              955         1           966.        1.000     0.124  
+#> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
+#> 
+#> ── income
+#> # A tibble: 4 × 9
+#>   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
+#>   <chr>     <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
+#> 1 Under $…  0.151          230          0.250       146.        0.151    -0.0993
+#> 2 $50k-$1…  0.294          300          0.326       284.        0.294    -0.0324
+#> 3 Over $1…  0.555          389          0.423       536.        0.555     0.132 
+#> 4 Total     1              919          1           966.        1.000     0.263 
+#> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
+```
+
+The **residual discrepancy** column shows how close the weighted
+distribution is to the target.
+
+### Tidy output
+
+For programmatic use, the broom-style methods return tibbles:
+
+``` r
+# One row per variable-level
+tidy(result)
+#> # A tibble: 10 × 5
+#>    variable level      target weighted_pct discrepancy
+#>    <chr>    <chr>       <dbl>        <dbl>       <dbl>
+#>  1 sex      Male        0.472       0.472    -2.22e- 9
+#>  2 sex      Female      0.528       0.528     2.22e- 9
+#>  3 race     White       0.706       0.706     5.71e-10
+#>  4 race     Black       0.121       0.121     1.61e-12
+#>  5 race     Hispanic    0.107       0.107    -5.71e-10
+#>  6 race     Asian       0.047       0.0470   -1.22e-10
+#>  7 race     Other       0.019       0.0190    1.20e-10
+#>  8 income   Under $50k  0.151       0.151     7.22e-16
+#>  9 income   $50k-$100k  0.294       0.294     1.72e-15
+#> 10 income   Over $100k  0.555       0.555    -6.66e-16
+
+# One-row summary
+glance(result)
+#> # A tibble: 1 × 7
+#>   converged iterations max_prop_err  deff n_eff n_obs n_vars
+#>   <lgl>          <int>        <dbl> <dbl> <dbl> <int>  <int>
+#> 1 TRUE             695  0.000000983  1.18  822.   966      3
+```
+
+### Augmenting the data
+
+To use the weights in downstream analyses, attach them to your data:
+
+``` r
+weighted_data <- augment(result)
+head(weighted_data)
+#> # A tibble: 6 × 9
+#>   state sex    race  income     education    married presidential region .weight
+#>   <chr> <chr>  <chr> <chr>      <chr>        <chr>   <chr>        <chr>    <dbl>
+#> 1 CO    Female White Over $100k NA           Divorc… Trump        West     1.45 
+#> 2 CA    Male   White Over $100k NA           Married Harris       West     1.32 
+#> 3 NC    Female White NA         Bachelor's   Married Harris       South    0.172
+#> 4 MA    Male   NA    Over $100k Some college Married Trump        North…   1.45 
+#> 5 WA    Female Black NA         Bachelor's   Married NA           West     0.183
+#> 6 GA    Male   White $50k-$100k NA           NA      Trump        South    0.935
+```
+
+The `.weight` column can then be used in downstream analyses.
+
+Here is the regional distribution before and after weighting:
+
+``` r
+unweighted_region <- prop.table(table(anes24$region))
+
+weighted_region <- with(
+  weighted_data[!is.na(weighted_data$region), ],
+  tapply(.weight, region, sum)
+)
+weighted_region <- weighted_region / sum(weighted_region)
+
+rbind(
+  unweighted = round(unweighted_region[names(weighted_region)], 3),
+  weighted = round(weighted_region, 3)
+)
+#>            Midwest Northeast South  West
+#> unweighted   0.243     0.137 0.371 0.249
+#> weighted     0.244     0.143 0.358 0.254
+```
+
+## Advanced options
+
+### Weight bounding
+
+By default, weights are capped at 5. Tighter bounds reduce extreme
+weights but can leave more residual mismatch.
+
+``` r
+# Unbounded fit from above
+range(result$weights)
+#> [1] 0.05047476 3.79304942
+design_effect(result$weights)
+#> $deff
+#> [1] 1.175752
+#> 
+#> $n_eff
+#> [1] 821.602
+
+# Default cap
+default_bounded <- rake(anes24, targets)
+range(default_bounded$weights)
+#> [1] 0.05047476 3.79304942
+design_effect(default_bounded$weights)
+#> $deff
+#> [1] 1.175752
+#> 
+#> $n_eff
+#> [1] 821.602
+
+# Tighter cap
+tight <- rake(anes24, targets, cap = 3)
+range(tight$weights)
+#> [1] 0.04148087 2.99609812
+design_effect(tight$weights)
+#> $deff
+#> [1] 1.172102
+#> 
+#> $n_eff
+#> [1] 824.1607
+
+# Or specify both min and max bounds
+bounded <- rake(anes24, targets, bounds = c(0.3, 3))
+range(bounded$weights)
+#> [1] 0.300000 2.101607
+```
+
+### Variable selection
+
+With many potential raking variables, you can let `ipf` select only the
+most discrepant ones:
+
+``` r
+targets_many <- list(
+  sex = c(Male = 0.472, Female = 0.528),
+  race = c(
+    White = 0.706,
+    Black = 0.121,
+    Hispanic = 0.107,
+    Asian = 0.047,
+    Other = 0.019
+  ),
+  income = c('Under $50k' = 0.151, '$50k-$100k' = 0.294, 'Over $100k' = 0.555),
+  married = c(
+    Married = 0.58,
+    Widowed = 0.06,
+    Divorced = 0.10,
+    Separated = 0.01,
+    'Never married' = 0.25
+  )
+)
+
+# Only rake on variables where discrepancy exceeds 5%
+result_pct <- rake(anes24, targets_many, type = 'pctlim', pctlim = 0.05)
+result_pct$vars_used
+#> [1] "race"    "income"  "married"
+```
+
+Use `type = "nlim"` to select the top N most discrepant variables, or
+`iterate = TRUE` to re-check after each round and add newly discrepant
+variables.
+
+### Checking discrepancies directly
+
+You can inspect raw discrepancy scores without raking:
+
+``` r
+find_discrepant_vars(
+  anes24,
+  targets_many,
+  weights = rep(1, nrow(anes24)),
+  choosemethod = 'total'
+)
+#>         sex        race      income     married 
+#> 0.009173777 0.123801047 0.263427639 0.483570392
+```

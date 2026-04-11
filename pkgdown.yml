@@ -1,0 +1,9 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  ipf: ipf.html
+last_built: 2026-04-11T19:39Z
+urls:
+  reference: http://christophertkenny.com/ipf/reference
+  article: http://christophertkenny.com/ipf/articles
