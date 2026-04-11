@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   ipf: ipf.html
-last_built: 2026-04-11T19:44Z
+last_built: 2026-04-11T20:00Z
 urls:
   reference: http://christophertkenny.com/ipf/reference
   article: http://christophertkenny.com/ipf/articles
