@@ -16,6 +16,7 @@ Study.
 
 ``` r
 library(ipf)
+library(tibble)
 data(anes24)
 ```
 
@@ -24,23 +25,23 @@ sample:
 
 ``` r
 anes24
-#> # A tibble: 966 × 8
-#>    state sex    race     income     education    married  presidential region   
-#>    <chr> <chr>  <chr>    <chr>      <chr>        <chr>    <chr>        <chr>    
-#>  1 CO    Female White    Over $100k NA           Divorced Trump        West     
-#>  2 CA    Male   White    Over $100k NA           Married  Harris       West     
-#>  3 NC    Female White    NA         Bachelor's   Married  Harris       South    
-#>  4 MA    Male   NA       Over $100k Some college Married  Trump        Northeast
-#>  5 WA    Female Black    NA         Bachelor's   Married  NA           West     
-#>  6 GA    Male   White    $50k-$100k NA           NA       Trump        South    
-#>  7 AR    Male   Black    Under $50k NA           NA       Harris       South    
-#>  8 TX    Male   Hispanic Under $50k Some college NA       Trump        South    
-#>  9 OR    Male   White    Under $50k NA           Divorced NA           West     
-#> 10 AL    Female White    Under $50k NA           Divorced NA           South    
+#> # A tibble: 966 × 7
+#>    state sex    race     income     education    married  presidential
+#>    <chr> <chr>  <chr>    <chr>      <chr>        <chr>    <chr>       
+#>  1 CO    Female White    Over $100k NA           Divorced Trump       
+#>  2 CA    Male   White    Over $100k NA           Married  Harris      
+#>  3 NC    Female White    NA         Bachelor's   Married  Harris      
+#>  4 MA    Male   NA       Over $100k Some college Married  Trump       
+#>  5 WA    Female Black    NA         Bachelor's   Married  NA          
+#>  6 GA    Male   White    $50k-$100k NA           NA       Trump       
+#>  7 AR    Male   Black    Under $50k NA           NA       Harris      
+#>  8 TX    Male   Hispanic Under $50k Some college NA       Trump       
+#>  9 OR    Male   White    Under $50k NA           Divorced NA          
+#> 10 AL    Female White    Under $50k NA           Divorced NA          
 #> # ℹ 956 more rows
 ```
 
-## Step 1: Check levels and missingness
+## Inspect data
 
 Before writing targets, inspect the levels in your sample and see where
 values are missing:
@@ -58,20 +59,12 @@ table(anes24$income, useNA = 'ifany')
 #> 
 #> $50k-$100k Over $100k Under $50k       <NA> 
 #>        300        389        230         47
-table(anes24$region, useNA = 'ifany')
-#> 
-#>   Midwest Northeast     South      West      <NA> 
-#>       209       118       319       214       106
-
-colSums(is.na(anes24[c('sex', 'race', 'income', 'region')]))
-#>    sex   race income region 
-#>      5     11     47    106
 ```
 
 When you define targets, the target names must match the data values
 exactly. `NA` values are ignored for that variable during raking.
 
-## Step 2: Define population targets
+## Define population targets
 
 Targets are a named list of named numeric vectors. Each vector’s names
 must match the levels in your data, and the values should be proportions
@@ -98,7 +91,7 @@ targets <- list(
 If your targets don’t sum to 1, `ipf` will normalize them automatically
 with a warning.
 
-## Step 3: Rake
+## Rake
 
 The main function is
 [`rake()`](http://christophertkenny.com/ipf/reference/rake.md):
@@ -133,7 +126,7 @@ base_weighted
 #> Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424
 ```
 
-## Step 4: Inspect results
+## Inspect results
 
 ### Design effect
 
@@ -242,37 +235,48 @@ To use the weights in downstream analyses, attach them to your data:
 ``` r
 weighted_data <- augment(result)
 head(weighted_data)
-#> # A tibble: 6 × 9
-#>   state sex    race  income     education    married presidential region .weight
-#>   <chr> <chr>  <chr> <chr>      <chr>        <chr>   <chr>        <chr>    <dbl>
-#> 1 CO    Female White Over $100k NA           Divorc… Trump        West     1.45 
-#> 2 CA    Male   White Over $100k NA           Married Harris       West     1.32 
-#> 3 NC    Female White NA         Bachelor's   Married Harris       South    0.172
-#> 4 MA    Male   NA    Over $100k Some college Married Trump        North…   1.45 
-#> 5 WA    Female Black NA         Bachelor's   Married NA           West     0.183
-#> 6 GA    Male   White $50k-$100k NA           NA      Trump        South    0.935
+#> # A tibble: 6 × 8
+#>   state sex    race  income     education    married  presidential .weight
+#>   <chr> <chr>  <chr> <chr>      <chr>        <chr>    <chr>          <dbl>
+#> 1 CO    Female White Over $100k NA           Divorced Trump          1.45 
+#> 2 CA    Male   White Over $100k NA           Married  Harris         1.32 
+#> 3 NC    Female White NA         Bachelor's   Married  Harris         0.172
+#> 4 MA    Male   NA    Over $100k Some college Married  Trump          1.45 
+#> 5 WA    Female Black NA         Bachelor's   Married  NA             0.183
+#> 6 GA    Male   White $50k-$100k NA           NA       Trump          0.935
 ```
 
 The `.weight` column can then be used in downstream analyses.
 
-Here is the regional distribution before and after weighting:
+For example, you can compare an estimate before and after weighting:
 
 ``` r
-unweighted_region <- prop.table(table(anes24$region))
+presidential_data <- subset(weighted_data, !is.na(presidential))
 
-weighted_region <- with(
-  weighted_data[!is.na(weighted_data$region), ],
-  tapply(.weight, region, sum)
-)
-weighted_region <- weighted_region / sum(weighted_region)
+presidential_unweighted <- prop.table(table(presidential_data$presidential))
 
-rbind(
-  unweighted = round(unweighted_region[names(weighted_region)], 3),
-  weighted = round(weighted_region, 3)
+presidential_weighted <- aggregate(
+  .weight ~ presidential,
+  presidential_data,
+  sum
 )
-#>            Midwest Northeast South  West
-#> unweighted   0.243     0.137 0.371 0.249
-#> weighted     0.244     0.143 0.358 0.254
+presidential_weighted$weighted_pct <- presidential_weighted$.weight /
+  sum(presidential_weighted$.weight)
+
+presidential_compare <- tibble::tibble(
+  presidential = presidential_weighted$presidential,
+  unweighted_pct = as.numeric(presidential_unweighted[
+    presidential_weighted$presidential
+  ]),
+  weighted_pct = presidential_weighted$weighted_pct
+)
+
+presidential_compare
+#> # A tibble: 2 × 3
+#>   presidential unweighted_pct weighted_pct
+#>   <chr>                 <dbl>        <dbl>
+#> 1 Harris                0.564        0.577
+#> 2 Trump                 0.436        0.423
 ```
 
 ## Advanced options

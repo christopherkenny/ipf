@@ -12,7 +12,7 @@ anes24
 
 ## Format
 
-A tibble with 966 rows and 8 columns:
+A tibble with 966 rows and 7 columns:
 
 - state:
 
@@ -46,11 +46,6 @@ A tibble with 966 rows and 8 columns:
 - presidential:
 
   2024 presidential vote choice: `"Harris"` or `"Trump"` (335 missing).
-
-- region:
-
-  Census region derived from `state`: `"Northeast"`, `"Midwest"`,
-  `"South"`, or `"West"` (106 missing).
 
 ## Source
 

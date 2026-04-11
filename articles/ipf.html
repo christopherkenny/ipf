@@ -76,28 +76,29 @@ National Election Study.</p>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://christophertkenny.com/ipf/">ipf</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">)</span></span></code></pre></div>
 <p>The data contains 966 respondents from the ANES 2024 face-to-face
 sample:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">anes24</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 966 × 8</span></span></span>
-<span><span class="co">#&gt;    state sex    race     income     education    married  presidential region   </span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> CO    Female White    Over $100k <span style="color: #BB0000;">NA</span>           Divorced Trump        West     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> CA    Male   White    Over $100k <span style="color: #BB0000;">NA</span>           Married  Harris       West     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> NC    Female White    <span style="color: #BB0000;">NA</span>         Bachelor's   Married  Harris       South    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> MA    Male   <span style="color: #BB0000;">NA</span>       Over $100k Some college Married  Trump        Northeast</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> WA    Female Black    <span style="color: #BB0000;">NA</span>         Bachelor's   Married  <span style="color: #BB0000;">NA</span>           West     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> GA    Male   White    $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Trump        South    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AR    Male   Black    Under $50k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Harris       South    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> TX    Male   Hispanic Under $50k Some college <span style="color: #BB0000;">NA</span>       Trump        South    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> OR    Male   White    Under $50k <span style="color: #BB0000;">NA</span>           Divorced <span style="color: #BB0000;">NA</span>           West     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AL    Female White    Under $50k <span style="color: #BB0000;">NA</span>           Divorced <span style="color: #BB0000;">NA</span>           South    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 966 × 7</span></span></span>
+<span><span class="co">#&gt;    state sex    race     income     education    married  presidential</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> CO    Female White    Over $100k <span style="color: #BB0000;">NA</span>           Divorced Trump       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> CA    Male   White    Over $100k <span style="color: #BB0000;">NA</span>           Married  Harris      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> NC    Female White    <span style="color: #BB0000;">NA</span>         Bachelor's   Married  Harris      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> MA    Male   <span style="color: #BB0000;">NA</span>       Over $100k Some college Married  Trump       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> WA    Female Black    <span style="color: #BB0000;">NA</span>         Bachelor's   Married  <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> GA    Male   White    $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Trump       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> AR    Male   Black    Under $50k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Harris      </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> TX    Male   Hispanic Under $50k Some college <span style="color: #BB0000;">NA</span>       Trump       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> OR    Male   White    Under $50k <span style="color: #BB0000;">NA</span>           Divorced <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> AL    Female White    Under $50k <span style="color: #BB0000;">NA</span>           Divorced <span style="color: #BB0000;">NA</span>          </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 956 more rows</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="step-1-check-levels-and-missingness">Step 1: Check levels and missingness<a class="anchor" aria-label="anchor" href="#step-1-check-levels-and-missingness"></a>
+<h2 id="inspect-data">Inspect data<a class="anchor" aria-label="anchor" href="#inspect-data"></a>
 </h2>
 <p>Before writing targets, inspect the levels in your sample and see
 where values are missing:</p>
@@ -113,21 +114,13 @@ where values are missing:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">$</span><span class="va">income</span>, useNA <span class="op">=</span> <span class="st">'ifany'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $50k-$100k Over $100k Under $50k       &lt;NA&gt; </span></span>
-<span><span class="co">#&gt;        300        389        230         47</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">$</span><span class="va">region</span>, useNA <span class="op">=</span> <span class="st">'ifany'</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Midwest Northeast     South      West      &lt;NA&gt; </span></span>
-<span><span class="co">#&gt;       209       118       319       214       106</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'sex'</span>, <span class="st">'race'</span>, <span class="st">'income'</span>, <span class="st">'region'</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    sex   race income region </span></span>
-<span><span class="co">#&gt;      5     11     47    106</span></span></code></pre></div>
+<span><span class="co">#&gt;        300        389        230         47</span></span></code></pre></div>
 <p>When you define targets, the target names must match the data values
 exactly. <code>NA</code> values are ignored for that variable during
 raking.</p>
 </div>
 <div class="section level2">
-<h2 id="step-2-define-population-targets">Step 2: Define population targets<a class="anchor" aria-label="anchor" href="#step-2-define-population-targets"></a>
+<h2 id="define-population-targets">Define population targets<a class="anchor" aria-label="anchor" href="#define-population-targets"></a>
 </h2>
 <p>Targets are a named list of named numeric vectors. Each vector’s
 names must match the levels in your data, and the values should be
@@ -152,7 +145,7 @@ proportions summing to 1.</p>
 automatically with a warning.</p>
 </div>
 <div class="section level2">
-<h2 id="step-3-rake">Step 3: Rake<a class="anchor" aria-label="anchor" href="#step-3-rake"></a>
+<h2 id="rake">Rake<a class="anchor" aria-label="anchor" href="#rake"></a>
 </h2>
 <p>The main function is <code><a href="../reference/rake.html">rake()</a></code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -182,7 +175,7 @@ containing the weights and diagnostics.</p>
 <span><span class="co">#&gt; Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="step-4-inspect-results">Step 4: Inspect results<a class="anchor" aria-label="anchor" href="#step-4-inspect-results"></a>
+<h2 id="inspect-results">Inspect results<a class="anchor" aria-label="anchor" href="#inspect-results"></a>
 </h2>
 <div class="section level3">
 <h3 id="design-effect">Design effect<a class="anchor" aria-label="anchor" href="#design-effect"></a>
@@ -287,34 +280,46 @@ data:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">weighted_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">weighted_data</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
-<span><span class="co">#&gt;   state sex    race  income     education    married presidential region .weight</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> CO    Female White Over $100k <span style="color: #BB0000;">NA</span>           Divorc… Trump        West     1.45 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> CA    Male   White Over $100k <span style="color: #BB0000;">NA</span>           Married Harris       West     1.32 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NC    Female White <span style="color: #BB0000;">NA</span>         Bachelor's   Married Harris       South    0.172</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> MA    Male   <span style="color: #BB0000;">NA</span>    Over $100k Some college Married Trump        North…   1.45 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> WA    Female Black <span style="color: #BB0000;">NA</span>         Bachelor's   Married <span style="color: #BB0000;">NA</span>           West     0.183</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> GA    Male   White $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>      Trump        South    0.935</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
+<span><span class="co">#&gt;   state sex    race  income     education    married  presidential .weight</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> CO    Female White Over $100k <span style="color: #BB0000;">NA</span>           Divorced Trump          1.45 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> CA    Male   White Over $100k <span style="color: #BB0000;">NA</span>           Married  Harris         1.32 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NC    Female White <span style="color: #BB0000;">NA</span>         Bachelor's   Married  Harris         0.172</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> MA    Male   <span style="color: #BB0000;">NA</span>    Over $100k Some college Married  Trump          1.45 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> WA    Female Black <span style="color: #BB0000;">NA</span>         Bachelor's   Married  <span style="color: #BB0000;">NA</span>             0.183</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> GA    Male   White $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Trump          0.935</span></span></code></pre></div>
 <p>The <code>.weight</code> column can then be used in downstream
 analyses.</p>
-<p>Here is the regional distribution before and after weighting:</p>
+<p>For example, you can compare an estimate before and after
+weighting:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">unweighted_region</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proportions.html" class="external-link">prop.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">$</span><span class="va">region</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">presidential_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">weighted_data</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">presidential</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">weighted_region</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/with.html" class="external-link">with</a></span><span class="op">(</span></span>
-<span>  <span class="va">weighted_data</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">weighted_data</span><span class="op">$</span><span class="va">region</span><span class="op">)</span>, <span class="op">]</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">.weight</span>, <span class="va">region</span>, <span class="va">sum</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">weighted_region</span> <span class="op">&lt;-</span> <span class="va">weighted_region</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">weighted_region</span><span class="op">)</span></span>
+<span><span class="va">presidential_unweighted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proportions.html" class="external-link">prop.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">presidential_data</span><span class="op">$</span><span class="va">presidential</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
-<span>  unweighted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">unweighted_region</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">weighted_region</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  weighted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">weighted_region</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="va">presidential_weighted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span></span>
+<span>  <span class="va">.weight</span> <span class="op">~</span> <span class="va">presidential</span>,</span>
+<span>  <span class="va">presidential_data</span>,</span>
+<span>  <span class="va">sum</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt;            Midwest Northeast South  West</span></span>
-<span><span class="co">#&gt; unweighted   0.243     0.137 0.371 0.249</span></span>
-<span><span class="co">#&gt; weighted     0.244     0.143 0.358 0.254</span></span></code></pre></div>
+<span><span class="va">presidential_weighted</span><span class="op">$</span><span class="va">weighted_pct</span> <span class="op">&lt;-</span> <span class="va">presidential_weighted</span><span class="op">$</span><span class="va">.weight</span> <span class="op">/</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">presidential_weighted</span><span class="op">$</span><span class="va">.weight</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">presidential_compare</span> <span class="op">&lt;-</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
+<span>  presidential <span class="op">=</span> <span class="va">presidential_weighted</span><span class="op">$</span><span class="va">presidential</span>,</span>
+<span>  unweighted_pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">presidential_unweighted</span><span class="op">[</span></span>
+<span>    <span class="va">presidential_weighted</span><span class="op">$</span><span class="va">presidential</span></span>
+<span>  <span class="op">]</span><span class="op">)</span>,</span>
+<span>  weighted_pct <span class="op">=</span> <span class="va">presidential_weighted</span><span class="op">$</span><span class="va">weighted_pct</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">presidential_compare</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt;   presidential unweighted_pct weighted_pct</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Harris                0.564        0.577</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Trump                 0.436        0.423</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
