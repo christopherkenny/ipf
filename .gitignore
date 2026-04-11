@@ -7,3 +7,9 @@ src/Makevars.win
 .httr-oauth
 .DS_Store
 .quarto
+docs
+inst/doc
+data-raw/*.csv
+data-raw/*.pdf
+/doc/
+/Meta/

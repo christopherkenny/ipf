@@ -10,9 +10,38 @@
 #' @useDynLib ipf, .registration = TRUE
 NULL
 
-#' Return string `"Hello world!"` to R.
+#' Raking / iterative proportional fitting core.
+#'
+#' @param weights Numeric vector (length n) of initial weights.
+#' @param margins R list of margins, each with `$levels` (integer) and `$targets` (numeric).
+#' @param max_iter Maximum number of full sweeps.
+#' @param tol Convergence tolerance on max proportional error.
+#' @param bounds NULL or numeric(2) c(lo, hi) for weight bounding.
+#' @param grand_total Total weight mass to preserve after bounding.
+#' @param diagnostics_every Record diagnostics every k iterations (0 = baseline only).
+#' @param verbose Print iteration progress.
 #' @export
-hello_world <- function() .Call(wrap__hello_world)
+rake_ipf_rust <- function(weights, margins, max_iter, tol, bounds, grand_total, diagnostics_every, verbose) .Call(wrap__rake_ipf_rust, weights, margins, max_iter, tol, bounds, grand_total, diagnostics_every, verbose)
+
+#' Compute weighted proportions and discrepancy from targets for a single variable.
+#'
+#' @param weights Numeric weight vector.
+#' @param levels Integer-coded variable (0 = NA/ignore, 1..L = categories).
+#' @param targets Numeric target proportions (length L, should sum to 1).
+#' @export
+compute_discrepancy_rust <- function(weights, levels, targets) .Call(wrap__compute_discrepancy_rust, weights, levels, targets)
+
+#' Compute design effect and effective sample size from a weight vector.
+#'
+#' @param weights Numeric weight vector.
+#' @export
+design_effect_rust <- function(weights) .Call(wrap__design_effect_rust, weights)
+
+#' Compute summary statistics for a weight vector.
+#'
+#' @param weights Numeric weight vector.
+#' @export
+weight_summary_rust <- function(weights) .Call(wrap__weight_summary_rust, weights)
 
 
 # nolint end

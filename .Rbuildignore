@@ -6,3 +6,11 @@
 ^src/rust/target$
 ^src/Makevars$
 ^src/Makevars\.win$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^README\.Rmd$
+^doc$
+^Meta$
+^data-raw$

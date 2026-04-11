@@ -1,0 +1,83 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# ipf
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+`ipf` provides fast iterative proportional fitting (raking) for survey weighting.
+The computational core is written in Rust for speed and numerical stability.
+It supports multiple raking variables, automatic variable selection, weight bounding, and comprehensive diagnostics.
+
+## Installation
+
+You can install the development version of ipf from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
+pak::pak("christopherkenny/ipf")
+```
+
+## Example
+
+Rake a survey sample to match known population targets:
+
+```{r example}
+library(ipf)
+data(anes24)
+
+# Define population targets as named proportions
+targets <- list(
+  sex = c(Male = 0.48, Female = 0.52),
+  race = c(
+    White = 0.59,
+    Black = 0.14,
+    Hispanic = 0.19,
+    Asian = 0.06,
+    "Native American" = 0.01,
+    Other = 0.01
+  )
+)
+
+# Rake
+result <- rake(anes24, targets)
+result
+```
+
+Examine per-variable diagnostics with `summary()`:
+
+```{r summary}
+summary(result)
+```
+
+Extract weights for downstream analysis:
+
+```{r augment}
+augmented <- augment(result)
+augmented[, c("sex", "race", ".weight")]
+```
+
+Get a tidy one-row-per-level view:
+
+```{r tidy}
+tidy(result)
+```
+
+Or a single-row model summary:
+
+```{r glance}
+glance(result)
+```

@@ -1,80 +1,296 @@
-make_margins_list <- function(m, w) {
-  grand_total <- sum(w)
-  stopifnot(all(c('var', 'targets') %in% names(m)))
-  v <- m$var
-  tg <- m$targets
-  vals <- df[[v]]
-  if (!is.factor(vals)) {
-    vals <- factor(vals)
+#' Iterative proportional fitting (raking)
+#'
+#' Adjusts survey weights so that weighted marginal distributions match known population targets.
+#' Supports automatic variable selection, iterative re-raking, and weight bounding.
+#'
+#' @param data A data frame or tibble containing the survey data.
+#' @param targets A named list of named numeric vectors specifying target proportions for each raking variable.
+#'   Names of the list must match column names in `data`.
+#'   Each vector's names must match the levels of the corresponding variable.
+#'   Values should sum to 1 (proportions); if not, they are normalized with a warning.
+#' @param base_weights Optional numeric vector of base (design) weights.
+#'   If `NULL` (default), uniform weights of 1 are used.
+#'   Centered to mean 1 before raking.
+#' @param cap Maximum weight value (ratio cap).
+#'   Weights exceeding this value are trimmed and all weights are renormalized.
+#'   Default `5`.
+#'   Ignored if `bounds` is specified.
+#' @param bounds Optional numeric vector of length 2, `c(lo, hi)`, specifying minimum and maximum weight bounds.
+#'   Overrides `cap`.
+#' @param type Variable selection method:
+#'   - `"nolim"` (default): use all variables in `targets`.
+#'   - `"pctlim"`: use only variables with discrepancy >= `pctlim`.
+#'   - `"nlim"`: use the `nlim` most discrepant variables.
+#' @param pctlim Discrepancy threshold for `type = "pctlim"`.
+#'   Default `0.05` (5 percentage points).
+#' @param nlim Number of variables for `type = "nlim"`.
+#'   Default `5`.
+#' @param choosemethod Method for aggregating per-category discrepancies into a single variable score.
+#'   One of `"total"`, `"max"`, `"average"`, `"totalsquared"`, `"maxsquared"`, `"averagesquared"`.
+#' @param iterate Logical.
+#'   If `TRUE` and `type = "pctlim"`, re-check discrepancies after raking and add newly discrepant variables, repeating up to 10 times.
+#'   Default `FALSE`.
+#' @param max_iter Maximum number of raking iterations.
+#'   Default `1000`.
+#' @param tol Convergence tolerance (max proportional error).
+#'   Default `1e-6`.
+#' @param verbose Logical.
+#'   If `TRUE`, print iteration progress.
+#'   Default `FALSE`.
+#' @param diagnostics_every Record per-margin diagnostics every `k` iterations.
+#'   `0` means only baseline.
+#'   Default `0`.
+#'
+#' @return An `ipf_rake` object (S3 class) containing:
+#'   - `weights`: final raked weight vector
+#'   - `data`: the input data frame
+#'   - `converged`: logical
+#'   - `iterations`: number of iterations
+#'   - `max_prop_err`: final max proportional error
+#'   - `targets`: normalized targets used
+#'   - `vars_used`: character vector of variables raked on
+#'   - `base_weights`: original base weights
+#'   - `type`, `choosemethod`, `cap`: settings used
+#'   - `deff`, `n_eff`: design effect and effective sample size
+#'   - `diagnostics`: tibble of per-iteration diagnostics
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4)),
+#'   age = sample(c('young', 'old'), 100, replace = TRUE, prob = c(0.7, 0.3))
+#' )
+#' targets <- list(
+#'   gender = c(M = 0.5, F = 0.5),
+#'   age = c(young = 0.6, old = 0.4)
+#' )
+#' result <- rake(data, targets)
+#' print(result)
+#'
+#' @export
+rake <- function(
+  data,
+  targets,
+  base_weights = NULL,
+  cap = 5,
+  bounds = NULL,
+  type = c('nolim', 'pctlim', 'nlim'),
+  pctlim = 0.05,
+  nlim = 5L,
+  choosemethod = c(
+    'total',
+    'max',
+    'average',
+    'totalsquared',
+    'maxsquared',
+    'averagesquared'
+  ),
+  iterate = FALSE,
+  max_iter = 1000L,
+  tol = 1e-6,
+  verbose = FALSE,
+  diagnostics_every = 0L
+) {
+  # --- Validation ---
+  if (!is.data.frame(data)) {
+    cli::cli_abort('{.arg data} must be a data frame.')
   }
-  stopifnot(is.numeric(tg), !is.null(names(tg)))
-  s <- sum(tg, na.rm = TRUE)
+  type <- match.arg(type)
+  choosemethod <- match.arg(choosemethod)
 
-  if (abs(s - 1) < 1e-8) {
-    tg_tot <- tg * grand_total
+  n <- nrow(data)
+
+  # --- Base weights ---
+  if (is.null(base_weights)) {
+    base_weights <- rep(1.0, n)
   } else {
-    tg_tot <- tg * (grand_total / s)
+    if (is.character(base_weights) && length(base_weights) == 1) {
+      if (!(base_weights %in% names(data))) {
+        cli::cli_abort('Column {.var {base_weights}} not found in data.')
+      }
+      base_weights <- data[[base_weights]]
+    }
+    if (!is.numeric(base_weights) || length(base_weights) != n) {
+      cli::cli_abort(
+        '{.arg base_weights} must be a numeric vector of length {n}.'
+      )
+    }
+    if (anyNA(base_weights) || any(base_weights <= 0)) {
+      cli::cli_abort('{.arg base_weights} must be positive and non-NA.')
+    }
   }
-  lev <- union(levels(vals), names(tg_tot))
-  vals <- factor(vals, levels = lev)
-  codes <- as.integer(vals)
-  codes[is.na(codes)] <- 0L
-  tg_vec <- as.numeric(tg_tot[lev])
-  cur <- tapply(w, vals, sum, default = 0)
-  zero_cells <- lev[which(cur == 0 & tg_vec > 0)]
-  if (length(zero_cells)) {
-    warning(sprintf('`%s`: zero-weight sample for %s', v, paste(zero_cells, collapse = ', ')))
+
+  # Center base weights to mean 1
+  base_weights <- base_weights / mean(base_weights)
+
+  # --- Targets ---
+  targets <- encode_targets(targets, data)
+
+  # --- Bounds ---
+  if (!is.null(bounds)) {
+    bounds <- as.numeric(bounds)
+    if (length(bounds) != 2) {
+      cli::cli_abort('{.arg bounds} must be numeric of length 2.')
+    }
+  } else if (!is.null(cap)) {
+    bounds <- c(-Inf, cap)
   }
 
-  list(
-    name = v,
-    level_names = lev,
-    levels = codes,
-    targets = tg_vec
-  )
-}
+  # Only apply finite bounds
+  bounds_for_rust <- if (!is.null(bounds) && any(is.finite(bounds))) {
+    bounds
+  } else {
+    NULL
+  }
 
-prep_margins_for_rust <- function(data, weight_col, margins) {
-  weight_col <- rlang::ensym(weight_col)
-  df <- tibble::as_tibble(data)
-  w <- df[[rlang::as_string(weight_col)]]
-  stopifnot(is.numeric(w), all(is.finite(w)), all(w > 0))
+  # --- Variable selection ---
+  active_targets <- targets
+  if (type == 'pctlim') {
+    disc_scores <- find_discrepant_vars(
+      data,
+      targets,
+      base_weights,
+      choosemethod
+    )
+    selected <- disc_scores[disc_scores >= pctlim]
+    if (length(selected) == 0) {
+      cli::cli_warn(
+        'No variables exceed {.arg pctlim} threshold of {.val {pctlim}}. Using all variables.'
+      )
+      active_targets <- targets
+    } else {
+      active_targets <- targets[names(selected)]
+    }
+  } else if (type == 'nlim') {
+    disc_scores <- find_discrepant_vars(
+      data,
+      targets,
+      base_weights,
+      choosemethod
+    )
+    top_n <- utils::head(sort(disc_scores, decreasing = TRUE), nlim)
+    active_targets <- targets[names(top_n)]
+  }
 
-  l_margins <- lapply(margins, make_margins_list)
+  # --- Encode margins for Rust ---
+  grand_total <- sum(base_weights)
+  rust_margins <- encode_margins_for_rust(data, active_targets, base_weights)
 
-  list(
-    weights = w,
-    grand_total = sum(w),
-    margins = l_margins
-  )
-}
-
-rake_weights <- function(data, weight_col, margins,
-                         max_iter = 50, tol = 1e-6,
-                         bounds = NULL, diagnostics_every = 1L,
-                         verbose = FALSE) {
-  prep <- prep_margins_for_rust(data, {{ weight_col }}, margins)
+  # --- Call Rust core ---
   res <- rake_ipf_rust(
-    weights = prep$weights,
-    margins = prep$margins,
+    weights = base_weights,
+    margins = rust_margins,
     max_iter = as.integer(max_iter),
     tol = tol,
-    bounds = if (is.null(bounds)) NULL else as.numeric(bounds),
-    grand_total = prep$grand_total,
+    bounds = bounds_for_rust,
+    grand_total = grand_total,
     diagnostics_every = as.integer(diagnostics_every),
     verbose = isTRUE(verbose)
   )
-  out_weights <- res$weights
-  diag <- tibble::as_tibble(res$diagnostics)
-  if (!is.null(diag$margin_index) && !is.null(res$margin_level_names)) {
-    mapper <- function(mi, li) res$margin_level_names[[mi]][li]
-    diag$level <- purrr::map2_chr(diag$margin_index, diag$level_index, mapper)
+
+  final_weights <- as.numeric(res$weights)
+  vars_used <- names(active_targets)
+
+  # --- Iterative re-raking (pctlim only) ---
+  if (isTRUE(iterate) && type == 'pctlim') {
+    for (iter_round in seq_len(10)) {
+      new_disc <- find_discrepant_vars(
+        data,
+        targets,
+        final_weights,
+        choosemethod
+      )
+      new_vars <- setdiff(names(new_disc[new_disc >= pctlim]), vars_used)
+      if (length(new_vars) == 0) {
+        break
+      }
+
+      if (verbose) {
+        cli::cli_inform(
+          'Iteration round {iter_round}: adding {length(new_vars)} variable(s).'
+        )
+      }
+
+      for (nv in new_vars) {
+        active_targets[[nv]] <- targets[[nv]]
+      }
+      vars_used <- names(active_targets)
+
+      rust_margins <- encode_margins_for_rust(
+        data,
+        active_targets,
+        final_weights
+      )
+      grand_total <- sum(final_weights)
+
+      res <- rake_ipf_rust(
+        weights = final_weights,
+        margins = rust_margins,
+        max_iter = as.integer(max_iter),
+        tol = tol,
+        bounds = bounds_for_rust,
+        grand_total = grand_total,
+        diagnostics_every = as.integer(diagnostics_every),
+        verbose = isTRUE(verbose)
+      )
+      final_weights <- as.numeric(res$weights)
+    }
   }
 
-  list(
-    data = dplyr::mutate(tibble::as_tibble(data), .weight_raked = out_weights),
+  # --- Design effect ---
+  de <- design_effect_rust(final_weights)
+
+  # --- Diagnostics tibble ---
+  diag <- tibble::tibble(
+    iteration = as.integer(res$diagnostics$iteration),
+    margin_index = as.integer(res$diagnostics$margin_index),
+    level_index = as.integer(res$diagnostics$level_index),
+    target = as.numeric(res$diagnostics$target),
+    current = as.numeric(res$diagnostics$current),
+    prop_err = as.numeric(res$diagnostics$prop_err)
+  )
+
+  # --- Build output ---
+  new_ipf_rake(
+    weights = final_weights,
+    data = data,
     converged = isTRUE(res$converged),
     iterations = as.integer(res$iterations),
+    max_prop_err = as.numeric(res$max_prop_err),
+    targets = active_targets,
+    vars_used = vars_used,
+    base_weights = as.numeric(res$prevec),
+    type = type,
+    choosemethod = choosemethod,
+    cap = cap,
+    deff = as.numeric(de$deff),
+    n_eff = as.numeric(de$n_eff),
     diagnostics = diag
   )
+}
+
+#' Encode margins list for the Rust raking engine
+#'
+#' @param data Data frame.
+#' @param targets Named list of named numeric targets (proportions, sum to 1).
+#' @param weights Current weight vector.
+#'
+#' @return List of margin lists, each with `$levels` and `$targets`.
+#'
+#' @keywords internal
+encode_margins_for_rust <- function(data, targets, weights) {
+  grand_total <- sum(weights)
+
+  lapply(names(targets), function(v) {
+    tgt <- targets[[v]]
+    enc <- encode_variable(data[[v]], names(tgt), var_name = v)
+
+    # Convert proportions to totals
+    tgt_totals <- tgt[enc$level_names] * grand_total
+    tgt_totals[is.na(tgt_totals)] <- 0
+
+    list(
+      levels = enc$codes,
+      targets = as.numeric(tgt_totals)
+    )
+  })
 }

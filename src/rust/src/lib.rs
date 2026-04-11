@@ -1,5 +1,9 @@
 use extendr_api::prelude::*;
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 /// Kahan summation for better numeric stability.
 #[inline]
 fn kahan_sum(values: &[f64]) -> f64 {
@@ -14,14 +18,13 @@ fn kahan_sum(values: &[f64]) -> f64 {
     sum
 }
 
-/// One margin encoded with integer levels (0 = ignore) and target totals.
+/// One margin encoded with integer levels (0 = ignore/NA) and target totals.
 #[derive(Clone)]
 struct Margin {
-    levels: Vec<usize>, // 0..=L, 0 means "ignore"
-    targets: Vec<f64>,  // length L
+    levels: Vec<usize>,
+    targets: Vec<f64>,
 }
 
-/// Helper: fetch a named element from an R List.
 fn list_get(list: &List, name: &str) -> Option<Robj> {
     for (k, v) in list.iter() {
         if k == name {
@@ -31,7 +34,6 @@ fn list_get(list: &List, name: &str) -> Option<Robj> {
     None
 }
 
-/// Parse margins from an R list. Each element must be a list with $levels and $targets.
 fn parse_margins(margins: List) -> Result<Vec<Margin>> {
     let mut out = Vec::with_capacity(margins.len());
     for (_name, robj) in margins.iter() {
@@ -54,7 +56,6 @@ fn parse_margins(margins: List) -> Result<Vec<Margin>> {
         let levels: Vec<usize> = li
             .iter()
             .map(|x| {
-                // NA -> 0, clamp at 0
                 let v = if x.is_na() { 0 } else { x.inner() };
                 v.max(0) as usize
             })
@@ -70,12 +71,24 @@ fn parse_margins(margins: List) -> Result<Vec<Margin>> {
     Ok(out)
 }
 
-/// Record a diagnostics snapshot without capturing outer borrows.
+/// Compute group sums for a single margin into `sums` (caller must zero first).
+#[inline]
+fn group_sums(m: &Margin, w: &[f64], sums: &mut [f64]) {
+    let lcount = m.targets.len();
+    for s in &mut sums[..lcount] {
+        *s = 0.0;
+    }
+    for (i, &code) in m.levels.iter().enumerate() {
+        if code > 0 && code <= lcount {
+            sums[code - 1] += w[i];
+        }
+    }
+}
+
 fn record_diag_snapshot(
-    ms: &Vec<Margin>,
+    ms: &[Margin],
     sums: &mut [f64],
     w: &[f64],
-    n: usize,
     iter_idx: i32,
     diag_iter: &mut Vec<f64>,
     diag_margin: &mut Vec<f64>,
@@ -89,22 +102,15 @@ fn record_diag_snapshot(
         if lcount == 0 {
             continue;
         }
-        // zero sums
-        for s in &mut sums[..lcount] {
-            *s = 0.0;
-        }
-        // group sums
-        for i in 0..n {
-            let code = m.levels[i];
-            if code > 0 {
-                sums[code - 1] += w[i];
-            }
-        }
-        // push rows
+        group_sums(m, w, sums);
         for li in 0..lcount {
             let tgt = m.targets[li];
             let cur = sums[li];
-            let err = if tgt > 0.0 { (cur - tgt).abs() / tgt } else { cur.abs() };
+            let err = if tgt > 0.0 {
+                (cur - tgt).abs() / tgt
+            } else {
+                cur.abs()
+            };
             diag_iter.push(iter_idx as f64);
             diag_margin.push((mi + 1) as f64);
             diag_level.push((li + 1) as f64);
@@ -115,72 +121,80 @@ fn record_diag_snapshot(
     }
 }
 
-/// Raking / IPF core
+// ---------------------------------------------------------------------------
+// Core raking engine
+// ---------------------------------------------------------------------------
+
+/// Raking / iterative proportional fitting core.
+///
+/// @param weights Numeric vector (length n) of initial weights.
+/// @param margins R list of margins, each with `$levels` (integer) and `$targets` (numeric).
+/// @param max_iter Maximum number of full sweeps.
+/// @param tol Convergence tolerance on max proportional error.
+/// @param bounds NULL or numeric(2) c(lo, hi) for weight bounding.
+/// @param grand_total Total weight mass to preserve after bounding.
+/// @param diagnostics_every Record diagnostics every k iterations (0 = baseline only).
+/// @param verbose Print iteration progress.
+/// @export
 #[extendr]
 fn rake_ipf_rust(
-    weights: Doubles,       // numeric vector length n
-    margins: List,          // list of margins (see parse_margins)
-    max_iter: i32,          // maximum iterations
-    tol: f64,               // convergence tolerance (max proportional error)
-    bounds: Robj,           // NULL or numeric length-2 c(lo, hi)
-    grand_total: f64,       // total weight to preserve after trimming
-    diagnostics_every: i32, // 0 = only baseline; >0 record every k iterations
+    weights: Doubles,
+    margins: List,
+    max_iter: i32,
+    tol: f64,
+    bounds: Robj,
+    grand_total: f64,
+    diagnostics_every: i32,
     verbose: bool,
 ) -> List {
-    // Convert weights (NA -> 0.0). Your R wrapper should already validate.
-    let mut w: Vec<f64> = weights.iter().map(|x| if x.is_na() { 0.0 } else { x.inner() }).collect();
+    let mut w: Vec<f64> = weights
+        .iter()
+        .map(|x| if x.is_na() { 0.0 } else { x.inner() })
+        .collect();
     let n = w.len();
 
-    // Parse bounds if present.
     let bounds_opt: Option<(f64, f64)> = if bounds.is_null() {
         None
     } else {
-        match bounds.try_into() as std::result::Result<Doubles, _> {
+        match TryInto::<Doubles>::try_into(bounds) {
             Ok(v) if v.len() == 2 => {
-                let lo = if v[0].is_na() { f64::NAN } else { v[0].inner() };
-                let hi = if v[1].is_na() { f64::NAN } else { v[1].inner() };
-                if lo.is_finite() && hi.is_finite() && lo <= hi {
+                let lo = if v[0].is_na() { f64::NEG_INFINITY } else { v[0].inner() };
+                let hi = if v[1].is_na() { f64::INFINITY } else { v[1].inner() };
+                if lo <= hi {
                     Some((lo, hi))
                 } else {
-                    rprintln!("Warning: `bounds` must be finite and ordered (lo <= hi); ignoring.");
+                    rprintln!("Warning: bounds lo > hi; ignoring.");
                     None
                 }
             }
-            Ok(v) => {
-                if !v.is_empty() {
-                    rprintln!("Warning: `bounds` must be numeric length-2; ignoring.");
-                }
-                None
-            }
-            Err(_) => {
-                rprintln!("Warning: `bounds` must be numeric length-2; ignoring.");
+            _ => {
+                rprintln!("Warning: bounds must be numeric(2); ignoring.");
                 None
             }
         }
     };
 
-    // Parse margins
     let ms = parse_margins(margins).unwrap();
-
-    // Scratch buffers to largest L
     let max_l = ms.iter().map(|m| m.targets.len()).max().unwrap_or(0);
     let mut sums = vec![0.0f64; max_l];
     let mut factors = vec![1.0f64; max_l];
 
-    // Diagnostics
+    // Diagnostics storage
     let mut diag_iter = Vec::<f64>::new();
-    let mut diag_margin = Vec::<f64>::new(); // 1-based
-    let mut diag_level = Vec::<f64>::new();  // 1-based
+    let mut diag_margin = Vec::<f64>::new();
+    let mut diag_level = Vec::<f64>::new();
     let mut diag_target = Vec::<f64>::new();
     let mut diag_current = Vec::<f64>::new();
     let mut diag_err = Vec::<f64>::new();
+
+    // Save pre-raking weights
+    let prevec: Vec<f64> = w.clone();
 
     // Baseline snapshot
     record_diag_snapshot(
         &ms,
         &mut sums,
         &w,
-        n,
         0,
         &mut diag_iter,
         &mut diag_margin,
@@ -190,71 +204,70 @@ fn rake_ipf_rust(
         &mut diag_err,
     );
 
-    // Main loop
     let mut converged = false;
     let mut iterations = 0i32;
     let mut max_prop_err = f64::INFINITY;
 
-    'outer: for it in 1..=max_iter {
+    for it in 1..=max_iter {
         iterations = it;
 
+        // Sweep all margins
         for m in &ms {
             let lcount = m.targets.len();
             if lcount == 0 {
                 continue;
             }
-
-            // group sums
-            for s in &mut sums[..lcount] {
-                *s = 0.0;
-            }
-            for i in 0..n {
-                let code = m.levels[i];
-                if code > 0 {
-                    sums[code - 1] += w[i];
-                }
-            }
-
-            // factors
+            group_sums(m, &w, &mut sums);
             for li in 0..lcount {
-                let cur = sums[li];
-                factors[li] = if cur > 0.0 { m.targets[li] / cur } else { 1.0 };
+                factors[li] = if sums[li] > 0.0 {
+                    m.targets[li] / sums[li]
+                } else {
+                    1.0
+                };
             }
-
-            // apply
             for i in 0..n {
                 let code = m.levels[i];
-                if code > 0 {
+                if code > 0 && code <= lcount {
                     w[i] *= factors[code - 1];
                 }
             }
+        }
 
-            // optional bounds + renormalize
-            if let Some((lo, hi)) = bounds_opt {
-                for wi in &mut w {
-                    if *wi < lo {
-                        *wi = lo;
-                    }
-                    if *wi > hi {
+        // Post-sweep bounding (anesrake-style: cap then renormalize, repeat)
+        if let Some((lo, hi)) = bounds_opt {
+            let lo_finite = lo.is_finite();
+            let hi_finite = hi.is_finite();
+            for _ in 0..100 {
+                let mut clamped = false;
+                for wi in w.iter_mut() {
+                    if hi_finite && *wi > hi + 1e-10 {
                         *wi = hi;
+                        clamped = true;
                     }
+                    if lo_finite && *wi < lo - 1e-10 {
+                        *wi = lo;
+                        clamped = true;
+                    }
+                }
+                if !clamped {
+                    break;
                 }
                 let s = kahan_sum(&w);
                 if s > 0.0 {
                     let c = grand_total / s;
-                    for wi in &mut w {
+                    for wi in w.iter_mut() {
                         *wi *= c;
                     }
                 }
             }
         }
 
+        // Record diagnostics
         if diagnostics_every > 0 && (it % diagnostics_every == 0) {
             record_diag_snapshot(
                 &ms,
                 &mut sums,
                 &w,
-                n,
                 it,
                 &mut diag_iter,
                 &mut diag_margin,
@@ -265,26 +278,22 @@ fn rake_ipf_rust(
             );
         }
 
-        // convergence: max proportional error across all margins
+        // Convergence check: max proportional error across all margin-levels
         let mut mpe = 0.0f64;
         for m in &ms {
             let lcount = m.targets.len();
             if lcount == 0 {
                 continue;
             }
-            for s in &mut sums[..lcount] {
-                *s = 0.0;
-            }
-            for i in 0..n {
-                let code = m.levels[i];
-                if code > 0 {
-                    sums[code - 1] += w[i];
-                }
-            }
+            group_sums(m, &w, &mut sums);
             for li in 0..lcount {
                 let tgt = m.targets[li];
                 let cur = sums[li];
-                let err = if tgt > 0.0 { (cur - tgt).abs() / tgt } else { cur.abs() };
+                let err = if tgt > 0.0 {
+                    (cur - tgt).abs() / tgt
+                } else {
+                    cur.abs()
+                };
                 if err > mpe {
                     mpe = err;
                 }
@@ -298,28 +307,189 @@ fn rake_ipf_rust(
 
         if max_prop_err.is_finite() && max_prop_err <= tol {
             converged = true;
-            break 'outer;
+            break;
         }
     }
 
-    list![
+    list!(
         weights = Doubles::from_values(w.into_iter()),
+        prevec = Doubles::from_values(prevec.into_iter()),
         converged = converged,
         iterations = iterations,
         max_prop_err = max_prop_err,
-        diagnostics = list![
+        diagnostics = list!(
             iteration = Doubles::from_values(diag_iter.into_iter()),
             margin_index = Doubles::from_values(diag_margin.into_iter()),
             level_index = Doubles::from_values(diag_level.into_iter()),
             target = Doubles::from_values(diag_target.into_iter()),
             current = Doubles::from_values(diag_current.into_iter()),
-            prop_err = Doubles::from_values(diag_err.into_iter())
-        ]
-    ]
+            prop_err = Doubles::from_values(diag_err.into_iter()),
+        ),
+    )
     .into()
 }
+
+// ---------------------------------------------------------------------------
+// Discrepancy computation
+// ---------------------------------------------------------------------------
+
+/// Compute weighted proportions and discrepancy from targets for a single variable.
+///
+/// @param weights Numeric weight vector.
+/// @param levels Integer-coded variable (0 = NA/ignore, 1..L = categories).
+/// @param targets Numeric target proportions (length L, should sum to 1).
+/// @export
+#[extendr]
+fn compute_discrepancy_rust(weights: Doubles, levels: Integers, targets: Doubles) -> List {
+    let n = weights.len();
+    let l = targets.len();
+    let mut sums = vec![0.0f64; l];
+    let mut total = 0.0f64;
+
+    for i in 0..n {
+        let wi = if weights[i].is_na() {
+            0.0
+        } else {
+            weights[i].inner()
+        };
+        let code = if levels[i].is_na() {
+            0
+        } else {
+            levels[i].inner().max(0) as usize
+        };
+        if code > 0 && code <= l {
+            sums[code - 1] += wi;
+            total += wi;
+        }
+    }
+
+    let mut wpct = vec![0.0f64; l];
+    let mut disc = vec![0.0f64; l];
+    for li in 0..l {
+        let tgt = if targets[li].is_na() {
+            0.0
+        } else {
+            targets[li].inner()
+        };
+        wpct[li] = if total > 0.0 { sums[li] / total } else { 0.0 };
+        disc[li] = tgt - wpct[li];
+    }
+
+    list!(
+        weighted_pct = Doubles::from_values(wpct.into_iter()),
+        discrepancy = Doubles::from_values(disc.into_iter()),
+    )
+    .into()
+}
+
+// ---------------------------------------------------------------------------
+// Design effect
+// ---------------------------------------------------------------------------
+
+/// Compute design effect and effective sample size from a weight vector.
+///
+/// @param weights Numeric weight vector.
+/// @export
+#[extendr]
+fn design_effect_rust(weights: Doubles) -> List {
+    let w: Vec<f64> = weights
+        .iter()
+        .filter(|x| !x.is_na())
+        .map(|x| x.inner())
+        .collect();
+    let n = w.len() as f64;
+    if n == 0.0 {
+        return list!(deff = f64::NAN, n_eff = f64::NAN).into();
+    }
+    let sum_w = kahan_sum(&w);
+    if sum_w == 0.0 {
+        return list!(deff = f64::NAN, n_eff = f64::NAN).into();
+    }
+    // Rescale to mean 1
+    let scale = n / sum_w;
+    let sum_w2: f64 = w.iter().map(|&x| {
+        let xs = x * scale;
+        xs * xs
+    }).sum();
+    let deff = sum_w2 / n;
+    let n_eff = n / deff;
+    list!(deff = deff, n_eff = n_eff).into()
+}
+
+// ---------------------------------------------------------------------------
+// Weight summary statistics
+// ---------------------------------------------------------------------------
+
+/// Compute summary statistics for a weight vector.
+///
+/// @param weights Numeric weight vector.
+/// @export
+#[extendr]
+fn weight_summary_rust(weights: Doubles) -> List {
+    let mut w: Vec<f64> = weights
+        .iter()
+        .filter(|x| !x.is_na())
+        .map(|x| x.inner())
+        .collect();
+    let n = w.len();
+    if n == 0 {
+        return list!(
+            min = f64::NAN,
+            q1 = f64::NAN,
+            median = f64::NAN,
+            mean = f64::NAN,
+            q3 = f64::NAN,
+            max = f64::NAN,
+            sd = f64::NAN,
+            cv = f64::NAN,
+        )
+        .into();
+    }
+    w.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let min = w[0];
+    let max = w[n - 1];
+    let mean = kahan_sum(&w) / n as f64;
+
+    let quantile = |p: f64| -> f64 {
+        let h = p * (n as f64 - 1.0);
+        let lo = h.floor() as usize;
+        let hi = lo + 1;
+        let frac = h - lo as f64;
+        if hi >= n {
+            w[n - 1]
+        } else {
+            w[lo] * (1.0 - frac) + w[hi] * frac
+        }
+    };
+    let q1 = quantile(0.25);
+    let median = quantile(0.5);
+    let q3 = quantile(0.75);
+
+    let var: f64 = w.iter().map(|&x| (x - mean) * (x - mean)).sum::<f64>() / n as f64;
+    let sd = var.sqrt();
+    let cv = if mean > 0.0 { sd / mean } else { f64::NAN };
+
+    list!(
+        min = min,
+        q1 = q1,
+        median = median,
+        mean = mean,
+        q3 = q3,
+        max = max,
+        sd = sd,
+        cv = cv,
+    )
+    .into()
+}
+
+// ---------------------------------------------------------------------------
+// Module registration
+// ---------------------------------------------------------------------------
 
 extendr_module! {
     mod ipf;
     fn rake_ipf_rust;
+    fn compute_discrepancy_rust;
+    fn design_effect_rust;
+    fn weight_summary_rust;
 }

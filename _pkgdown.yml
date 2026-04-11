@@ -1,0 +1,45 @@
+url: http://christophertkenny.com/ipf/
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [search, github]
+
+articles:
+  - title: Getting Started
+    contents:
+      - ipf
+
+reference:
+  - title: Raking
+    desc: Core raking function
+    contents:
+      - rake
+
+  - title: Diagnostics
+    desc: Post-raking diagnostics and assessment
+    contents:
+      - design_effect
+      - weight_assess
+      - find_discrepant_vars
+
+  - title: Tidying
+    desc: Broom-compatible methods and re-exported generics
+    contents:
+      - tidy.ipf_rake
+      - glance.ipf_rake
+      - augment.ipf_rake
+      - reexports
+
+  - title: S3 Methods
+    desc: Print and summary methods
+    contents:
+      - print.ipf_rake
+      - summary.ipf_rake
+
+  - title: Data
+    desc: Example datasets
+    contents:
+      - anes24
