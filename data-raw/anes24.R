@@ -170,4 +170,6 @@ anes24 <- anes24 |>
     )
   )
 
+anes24 <- as_tibble(anes24)
+
 usethis::use_data(anes24, overwrite = TRUE)
