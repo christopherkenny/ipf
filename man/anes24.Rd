@@ -5,7 +5,7 @@
 \alias{anes24}
 \title{ANES 2024 Time Series Study (subset)}
 \format{
-A tibble with 966 rows and 8 columns:
+A tibble with 966 rows and 7 columns:
 \describe{
 \item{state}{Two-letter US state abbreviation. \code{NA} for respondents whose state is not identified (106 missing).}
 \item{sex}{Respondent sex: \code{"Male"} or \code{"Female"} (5 missing).}
@@ -14,7 +14,6 @@ A tibble with 966 rows and 8 columns:
 \item{education}{Education: \code{"Less than HS"}, \code{"High school"}, \code{"Some college"}, \code{"Bachelor's"}, or \code{"Graduate"} (451 missing).}
 \item{married}{Marital status: \code{"Married"}, \code{"Widowed"}, \code{"Divorced"}, \code{"Separated"}, or \code{"Never married"} (277 missing).}
 \item{presidential}{2024 presidential vote choice: \code{"Harris"} or \code{"Trump"} (335 missing).}
-\item{region}{Census region derived from \code{state}: \code{"Northeast"}, \code{"Midwest"}, \code{"South"}, or \code{"West"} (106 missing).}
 }
 }
 \source{

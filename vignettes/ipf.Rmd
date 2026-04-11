@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = '#>'
 )
-library(tibble)
+
 ```
 
 ## Overview
@@ -27,6 +27,7 @@ This vignette walks through a complete raking workflow using the bundled `anes24
 
 ```{r setup}
 library(ipf)
+library(tibble)
 data(anes24)
 ```
 
@@ -36,7 +37,7 @@ The data contains `r nrow(anes24)` respondents from the ANES 2024 face-to-face s
 anes24
 ```
 
-## Step 1: Check levels and missingness
+## Inspect data
 
 Before writing targets, inspect the levels in your sample and see where values are missing:
 
@@ -44,15 +45,12 @@ Before writing targets, inspect the levels in your sample and see where values a
 table(anes24$sex, useNA = 'ifany')
 table(anes24$race, useNA = 'ifany')
 table(anes24$income, useNA = 'ifany')
-table(anes24$region, useNA = 'ifany')
-
-colSums(is.na(anes24[c('sex', 'race', 'income', 'region')]))
 ```
 
 When you define targets, the target names must match the data values exactly.
 `NA` values are ignored for that variable during raking.
 
-## Step 2: Define population targets
+## Define population targets
 
 Targets are a named list of named numeric vectors.
 Each vector's names must match the levels in your data, and the values should be proportions summing to 1.
@@ -77,7 +75,7 @@ targets <- list(
 
 If your targets don't sum to 1, `ipf` will normalize them automatically with a warning.
 
-## Step 3: Rake
+## Rake
 
 The main function is `rake()`:
 ```{r rake-basic}
@@ -97,7 +95,7 @@ base_weighted <- rake(anes24, targets, base_weights = base_w, cap = NULL)
 base_weighted
 ```
 
-## Step 4: Inspect results
+## Inspect results
 
 ### Design effect
 
@@ -141,21 +139,30 @@ head(weighted_data)
 
 The `.weight` column can then be used in downstream analyses.
 
-Here is the regional distribution before and after weighting:
+For example, you can compare an estimate before and after weighting:
 
-```{r region-comparison}
-unweighted_region <- prop.table(table(anes24$region))
+```{r presidential-comparison}
+presidential_data <- subset(weighted_data, !is.na(presidential))
 
-weighted_region <- with(
-  weighted_data[!is.na(weighted_data$region), ],
-  tapply(.weight, region, sum)
+presidential_unweighted <- prop.table(table(presidential_data$presidential))
+
+presidential_weighted <- aggregate(
+  .weight ~ presidential,
+  presidential_data,
+  sum
 )
-weighted_region <- weighted_region / sum(weighted_region)
+presidential_weighted$weighted_pct <- presidential_weighted$.weight /
+  sum(presidential_weighted$.weight)
 
-rbind(
-  unweighted = round(unweighted_region[names(weighted_region)], 3),
-  weighted = round(weighted_region, 3)
+presidential_compare <- tibble::tibble(
+  presidential = presidential_weighted$presidential,
+  unweighted_pct = as.numeric(presidential_unweighted[
+    presidential_weighted$presidential
+  ]),
+  weighted_pct = presidential_weighted$weighted_pct
 )
+
+presidential_compare
 ```
 
 ## Advanced options
