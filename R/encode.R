@@ -1,18 +1,28 @@
 #' Encode a variable to integer codes for the Rust raking engine
 #'
 #' Converts factor, character, logical, or integer variables to 1-based integer codes.
-#' NAs become 0 (ignored by the Rust core).
+#' NAs either become 0 (ignored by the Rust core) or an explicit missing bucket.
 #'
 #' @param x A vector from the data frame.
 #' @param target_names Character vector of expected level names from the target.
 #' @param var_name Name of the variable (for error messages).
+#' @param na_method How to handle `NA` values.
+#'   `"ignore"` excludes them from that margin.
+#'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return A list with:
 #'   - `codes`: integer vector (0 = NA, 1..L = categories)
 #'   - `level_names`: character vector of level names in order
 #'
 #' @keywords internal
-encode_variable <- function(x, target_names, var_name = 'variable') {
+encode_variable <- function(
+  x,
+  target_names,
+  var_name = 'variable',
+  na_method = c('ignore', 'bucket')
+) {
+  na_method <- match.arg(na_method)
+
   if (is.logical(x)) {
     x <- factor(x, levels = c(FALSE, TRUE), labels = c('FALSE', 'TRUE'))
   } else if (is.character(x)) {
@@ -48,15 +58,60 @@ encode_variable <- function(x, target_names, var_name = 'variable') {
 
   # Reorder factor to match target_names order
   all_levels <- union(target_names, lvls)
-  x <- factor(x, levels = all_levels)
+  if (na_method == 'bucket' && anyNA(x)) {
+    all_levels <- c(all_levels, '(Missing)')
+    x <- as.character(x)
+    x[is.na(x)] <- '(Missing)'
+    x <- factor(x, levels = all_levels)
+  } else {
+    x <- factor(x, levels = all_levels)
+  }
 
   codes <- as.integer(x)
-  codes[is.na(codes)] <- 0L
+  if (na_method == 'ignore') {
+    codes[is.na(codes)] <- 0L
+  }
 
   list(
     codes = codes,
     level_names = all_levels
   )
+}
+
+build_margin_targets <- function(
+  target,
+  level_names,
+  codes,
+  weights,
+  na_method = c('ignore', 'bucket'),
+  output = c('proportion', 'total')
+) {
+  na_method <- match.arg(na_method)
+  output <- match.arg(output)
+
+  target_vec <- stats::setNames(numeric(length(level_names)), level_names)
+  target_vec[names(target)] <- as.numeric(target)
+
+  if (na_method == 'bucket' && '(Missing)' %in% level_names) {
+    missing_index <- match('(Missing)', level_names)
+    missing_weight <- sum(weights[codes == missing_index])
+    observed_total <- sum(weights) - missing_weight
+
+    if (output == 'proportion') {
+      grand_total <- sum(weights)
+      if (grand_total > 0) {
+        target_vec[names(target)] <- as.numeric(target) * (observed_total / grand_total)
+        target_vec[missing_index] <- missing_weight / grand_total
+      }
+    } else {
+      target_vec[names(target)] <- as.numeric(target) * observed_total
+      target_vec[missing_index] <- missing_weight
+    }
+  } else if (output == 'total') {
+    target_vec <- target_vec * sum(weights)
+  }
+
+  unname(target_vec)
 }
 
 #' Validate and normalize target distributions

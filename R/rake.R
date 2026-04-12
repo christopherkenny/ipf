@@ -27,9 +27,14 @@
 #'   Default `5`.
 #' @param choosemethod Method for aggregating per-category discrepancies into a single variable score.
 #'   One of `"total"`, `"max"`, `"average"`, `"totalsquared"`, `"maxsquared"`, `"averagesquared"`.
+#' @param na_method How to handle `NA` values in raking variables.
+#'   `"ignore"` excludes missing cases from that variable's margin update.
+#'   `"bucket"` treats missing values as an implicit extra category whose total
+#'   weight is preserved while the named targets are rescaled to the remaining
+#'   nonmissing weight mass.
 #' @param iterate Logical.
 #'   If `TRUE` and `type = "pctlim"`, re-check discrepancies after raking and add newly discrepant variables, repeating up to 10 times.
-#'   Default `FALSE`.
+#'   Default `TRUE`.
 #' @param max_iter Maximum number of raking iterations.
 #'   Default `1000`.
 #' @param tol Convergence tolerance (max proportional error).
@@ -50,7 +55,7 @@
 #'   - `targets`: normalized targets used
 #'   - `vars_used`: character vector of variables raked on
 #'   - `base_weights`: original base weights
-#'   - `type`, `choosemethod`, `cap`: settings used
+#'   - `type`, `choosemethod`, `na_method`, `cap`: settings used
 #'   - `deff`, `n_eff`: design effect and effective sample size
 #'   - `diagnostics`: tibble of per-iteration diagnostics
 #'
@@ -84,7 +89,8 @@ rake <- function(
     'maxsquared',
     'averagesquared'
   ),
-  iterate = FALSE,
+  na_method = c('ignore', 'bucket'),
+  iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-6,
   verbose = FALSE,
@@ -96,6 +102,7 @@ rake <- function(
   }
   type <- match.arg(type)
   choosemethod <- match.arg(choosemethod)
+  na_method <- match.arg(na_method)
 
   n <- nrow(data)
 
@@ -149,7 +156,8 @@ rake <- function(
       data,
       targets,
       base_weights,
-      choosemethod
+      choosemethod,
+      na_method = na_method
     )
     selected <- disc_scores[disc_scores >= pctlim]
     if (length(selected) == 0) {
@@ -165,7 +173,8 @@ rake <- function(
       data,
       targets,
       base_weights,
-      choosemethod
+      choosemethod,
+      na_method = na_method
     )
     top_n <- utils::head(sort(disc_scores, decreasing = TRUE), nlim)
     active_targets <- targets[names(top_n)]
@@ -173,7 +182,12 @@ rake <- function(
 
   # --- Encode margins for Rust ---
   grand_total <- sum(base_weights)
-  rust_margins <- encode_margins_for_rust(data, active_targets, base_weights)
+  rust_margins <- encode_margins_for_rust(
+    data,
+    active_targets,
+    base_weights,
+    na_method = na_method
+  )
 
   # --- Call Rust core ---
   res <- rake_ipf_rust(
@@ -197,7 +211,8 @@ rake <- function(
         data,
         targets,
         final_weights,
-        choosemethod
+        choosemethod,
+        na_method = na_method
       )
       new_vars <- setdiff(names(new_disc[new_disc >= pctlim]), vars_used)
       if (length(new_vars) == 0) {
@@ -218,7 +233,8 @@ rake <- function(
       rust_margins <- encode_margins_for_rust(
         data,
         active_targets,
-        final_weights
+        final_weights,
+        na_method = na_method
       )
       grand_total <- sum(final_weights)
 
@@ -261,6 +277,7 @@ rake <- function(
     base_weights = as.numeric(res$prevec),
     type = type,
     choosemethod = choosemethod,
+    na_method = na_method,
     cap = cap,
     deff = as.numeric(de$deff),
     n_eff = as.numeric(de$n_eff),
@@ -277,16 +294,32 @@ rake <- function(
 #' @return List of margin lists, each with `$levels` and `$targets`.
 #'
 #' @keywords internal
-encode_margins_for_rust <- function(data, targets, weights) {
-  grand_total <- sum(weights)
+encode_margins_for_rust <- function(
+  data,
+  targets,
+  weights,
+  na_method = c('ignore', 'bucket')
+) {
+  na_method <- match.arg(na_method)
 
   lapply(names(targets), function(v) {
     tgt <- targets[[v]]
-    enc <- encode_variable(data[[v]], names(tgt), var_name = v)
+    enc <- encode_variable(
+      data[[v]],
+      names(tgt),
+      var_name = v,
+      na_method = na_method
+    )
 
     # Convert proportions to totals
-    tgt_totals <- tgt[enc$level_names] * grand_total
-    tgt_totals[is.na(tgt_totals)] <- 0
+    tgt_totals <- build_margin_targets(
+      target = tgt,
+      level_names = enc$level_names,
+      codes = enc$codes,
+      weights = weights,
+      na_method = na_method,
+      output = 'total'
+    )
 
     list(
       levels = enc$codes,

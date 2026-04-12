@@ -15,7 +15,8 @@ rake(
   nlim = 5L,
   choosemethod = c("total", "max", "average", "totalsquared", "maxsquared",
     "averagesquared"),
-  iterate = FALSE,
+  na_method = c("ignore", "bucket"),
+  iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-06,
   verbose = FALSE,
@@ -58,9 +59,15 @@ Default \code{5}.}
 \item{choosemethod}{Method for aggregating per-category discrepancies into a single variable score.
 One of \code{"total"}, \code{"max"}, \code{"average"}, \code{"totalsquared"}, \code{"maxsquared"}, \code{"averagesquared"}.}
 
+\item{na_method}{How to handle \code{NA} values in raking variables.
+\code{"ignore"} excludes missing cases from that variable's margin update.
+\code{"bucket"} treats missing values as an implicit extra category whose total
+weight is preserved while the named targets are rescaled to the remaining
+nonmissing weight mass.}
+
 \item{iterate}{Logical.
 If \code{TRUE} and \code{type = "pctlim"}, re-check discrepancies after raking and add newly discrepant variables, repeating up to 10 times.
-Default \code{FALSE}.}
+Default \code{TRUE}.}
 
 \item{max_iter}{Maximum number of raking iterations.
 Default \code{1000}.}
@@ -87,7 +94,7 @@ An \code{ipf_rake} object (S3 class) containing:
 \item \code{targets}: normalized targets used
 \item \code{vars_used}: character vector of variables raked on
 \item \code{base_weights}: original base weights
-\item \code{type}, \code{choosemethod}, \code{cap}: settings used
+\item \code{type}, \code{choosemethod}, \code{na_method}, \code{cap}: settings used
 \item \code{deff}, \code{n_eff}: design effect and effective sample size
 \item \code{diagnostics}: tibble of per-iteration diagnostics
 }

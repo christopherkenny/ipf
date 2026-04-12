@@ -4,7 +4,13 @@
 \alias{weight_assess}
 \title{Assess weight quality with diagnostic tables}
 \usage{
-weight_assess(data, targets, weights, base_weights = NULL)
+weight_assess(
+  data,
+  targets,
+  weights,
+  base_weights = NULL,
+  na_method = c("ignore", "bucket")
+)
 }
 \arguments{
 \item{data}{Data frame.}
@@ -15,6 +21,10 @@ weight_assess(data, targets, weights, base_weights = NULL)
 
 \item{base_weights}{Original base weights before raking.
 If \code{NULL}, uses uniform weights.}
+
+\item{na_method}{How to handle \code{NA} values.
+\code{"ignore"} excludes them from that margin.
+\code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{
 Named list of tibbles, one per variable.

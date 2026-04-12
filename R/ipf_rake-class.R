@@ -10,6 +10,7 @@
 #' @param base_weights Original base weights.
 #' @param type Variable selection type.
 #' @param choosemethod Discrepancy aggregation method.
+#' @param na_method Missing-data handling method.
 #' @param cap Weight cap value.
 #' @param deff Design effect.
 #' @param n_eff Effective sample size.
@@ -29,6 +30,7 @@ new_ipf_rake <- function(
   base_weights,
   type,
   choosemethod,
+  na_method,
   cap,
   deff,
   n_eff,
@@ -46,6 +48,7 @@ new_ipf_rake <- function(
       base_weights = base_weights,
       type = type,
       choosemethod = choosemethod,
+      na_method = na_method,
       cap = cap,
       deff = deff,
       n_eff = n_eff,
@@ -78,6 +81,7 @@ print.ipf_rake <- function(x, ...) {
     'Converged: {conv_status} ({x$iterations} iterations, max prop err = {signif(x$max_prop_err, 3)})'
   )
   cli::cli_text('Variables raked: {.val {x$vars_used}}')
+  cli::cli_text('Missing handling: {.val {x$na_method}}')
   cli::cli_text(
     'Design effect: {round(x$deff, 3)} | Effective n: {round(x$n_eff)} / {n}'
   )
@@ -104,7 +108,8 @@ summary.ipf_rake <- function(object, ...) {
     data = object$data,
     targets = object$targets,
     weights = object$weights,
-    base_weights = object$base_weights
+    base_weights = object$base_weights,
+    na_method = object$na_method
   )
 
   used_base <- !all(object$base_weights == 1)
@@ -134,6 +139,7 @@ summary.ipf_rake <- function(object, ...) {
   cli::cli_alert_info(
     'Selection: type = {.val {object$type}}, method = {.val {object$choosemethod}}'
   )
+  cli::cli_alert_info('Missing handling: {.val {object$na_method}}')
   cli::cli_alert_info('Variables raked: {.val {object$vars_used}}')
 
   # Weight summary
@@ -164,6 +170,7 @@ summary.ipf_rake <- function(object, ...) {
       max_prop_err = object$max_prop_err
     ),
     base_weights_used = used_base,
+    na_method = object$na_method,
     vars_used = object$vars_used,
     weight_summary = ws,
     design_effect = list(deff = object$deff, n_eff = object$n_eff),

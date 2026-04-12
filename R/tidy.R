@@ -14,7 +14,8 @@ tidy.ipf_rake <- function(x, ...) {
     data = x$data,
     targets = x$targets,
     weights = x$weights,
-    base_weights = x$base_weights
+    base_weights = x$base_weights,
+    na_method = x$na_method
   )
 
   rows <- lapply(names(assessment), function(v) {

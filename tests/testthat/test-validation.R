@@ -49,6 +49,18 @@ test_that('encode_variable handles NAs', {
   expect_equal(enc$codes, c(1L, 0L, 2L))
 })
 
+test_that('encode_variable can bucket NAs', {
+  enc <- encode_variable(
+    c('a', NA, 'b'),
+    c('a', 'b'),
+    var_name = 'test',
+    na_method = 'bucket'
+  )
+
+  expect_equal(enc$codes, c(1L, 3L, 2L))
+  expect_equal(enc$level_names, c('a', 'b', '(Missing)'))
+})
+
 test_that('encode_variable handles logical vectors', {
   enc <- encode_variable(
     c(TRUE, FALSE, TRUE),

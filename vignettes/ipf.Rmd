@@ -48,7 +48,8 @@ table(anes24$income, useNA = 'ifany')
 ```
 
 When you define targets, the target names must match the data values exactly.
-`NA` values are ignored for that variable during raking.
+By default, `NA` values are ignored for that variable during raking.
+If you use `na_method = 'bucket'`, `ipf` treats missing values as an implicit extra category and preserves their total weight while rescaling the named targets to the remaining nonmissing weight mass.
 
 ## Define population targets
 
@@ -84,6 +85,13 @@ result
 ```
 
 That's it — `result` is an `ipf_rake` object containing the weights and diagnostics.
+
+If you want missing values in a raking variable to act like their own implicit category, use `na_method = 'bucket'`:
+
+```{r bucket}
+bucketed <- rake(anes24, targets, cap = NULL, na_method = 'bucket')
+bucketed
+```
 
 If you already have design weights, pass them through `base_weights`:
 
@@ -221,7 +229,7 @@ result_pct <- rake(anes24, targets_many, type = 'pctlim', pctlim = 0.05)
 result_pct$vars_used
 ```
 
-Use `type = "nlim"` to select the top N most discrepant variables, or `iterate = TRUE` to re-check after each round and add newly discrepant variables.
+Use `type = 'nlim'` to select the top N most discrepant variables, or `iterate = TRUE` to re-check after each round and add newly discrepant variables.
 
 ### Checking discrepancies directly
 

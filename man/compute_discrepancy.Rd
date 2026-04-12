@@ -4,7 +4,13 @@
 \alias{compute_discrepancy}
 \title{Compute discrepancy between weighted distribution and targets}
 \usage{
-compute_discrepancy(data, targets, weights, var_name = NULL)
+compute_discrepancy(
+  data,
+  targets,
+  weights,
+  var_name = NULL,
+  na_method = c("ignore", "bucket")
+)
 }
 \arguments{
 \item{data}{Data frame containing the variables.}
@@ -15,6 +21,10 @@ compute_discrepancy(data, targets, weights, var_name = NULL)
 
 \item{var_name}{Single variable name to compute discrepancy for.
 If \code{NULL}, computes for all variables in \code{targets}.}
+
+\item{na_method}{How to handle \code{NA} values.
+\code{"ignore"} excludes them from that margin.
+\code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{
 Named list with \code{weighted_pct} and \code{discrepancy} vectors per variable.

@@ -15,6 +15,7 @@ new_ipf_rake(
   base_weights,
   type,
   choosemethod,
+  na_method,
   cap,
   deff,
   n_eff,
@@ -41,6 +42,8 @@ new_ipf_rake(
 \item{type}{Variable selection type.}
 
 \item{choosemethod}{Discrepancy aggregation method.}
+
+\item{na_method}{Missing-data handling method.}
 
 \item{cap}{Weight cap value.}
 

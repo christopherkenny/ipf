@@ -4,7 +4,12 @@
 \alias{encode_variable}
 \title{Encode a variable to integer codes for the Rust raking engine}
 \usage{
-encode_variable(x, target_names, var_name = "variable")
+encode_variable(
+  x,
+  target_names,
+  var_name = "variable",
+  na_method = c("ignore", "bucket")
+)
 }
 \arguments{
 \item{x}{A vector from the data frame.}
@@ -12,6 +17,10 @@ encode_variable(x, target_names, var_name = "variable")
 \item{target_names}{Character vector of expected level names from the target.}
 
 \item{var_name}{Name of the variable (for error messages).}
+
+\item{na_method}{How to handle \code{NA} values.
+\code{"ignore"} excludes them from that margin.
+\code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{
 A list with:
@@ -22,6 +31,6 @@ A list with:
 }
 \description{
 Converts factor, character, logical, or integer variables to 1-based integer codes.
-NAs become 0 (ignored by the Rust core).
+NAs either become 0 (ignored by the Rust core) or an explicit missing bucket.
 }
 \keyword{internal}

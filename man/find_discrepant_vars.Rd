@@ -4,7 +4,13 @@
 \alias{find_discrepant_vars}
 \title{Find discrepant variables and their aggregate discrepancy scores}
 \usage{
-find_discrepant_vars(data, targets, weights, choosemethod = "total")
+find_discrepant_vars(
+  data,
+  targets,
+  weights,
+  choosemethod = "total",
+  na_method = c("ignore", "bucket")
+)
 }
 \arguments{
 \item{data}{Data frame.}
@@ -15,6 +21,10 @@ find_discrepant_vars(data, targets, weights, choosemethod = "total")
 
 \item{choosemethod}{Method for aggregating per-category discrepancies.
 One of \code{"total"}, \code{"max"}, \code{"average"}, \code{"totalsquared"}, \code{"maxsquared"}, \code{"averagesquared"}.}
+
+\item{na_method}{How to handle \code{NA} values.
+\code{"ignore"} excludes them from that margin.
+\code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{
 Named numeric vector of aggregate discrepancy per variable.

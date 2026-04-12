@@ -64,6 +64,15 @@ test_that('glance.ipf_rake returns single-row tibble', {
   ))
 })
 
+test_that('rake stores the missing-data method on the result', {
+  data <- data.frame(gender = c('M', 'F', NA, 'M'))
+  targets <- list(gender = c(M = 0.5, F = 0.5))
+
+  result <- rake(data, targets, na_method = 'bucket')
+
+  expect_identical(result$na_method, 'bucket')
+})
+
 test_that('augment.ipf_rake appends .weight column', {
   set.seed(42)
   data <- data.frame(

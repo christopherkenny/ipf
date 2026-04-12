@@ -45,3 +45,20 @@ test_that('weight_assess returns per-variable tibbles', {
   data_rows <- tbl[tbl$level != 'Total', ]
   expect_true(all(abs(data_rows$residual_disc) < 1e-4))
 })
+
+test_that('weight_assess includes a missing row with na_method = bucket', {
+  data <- data.frame(
+    gender = c('M', 'F', NA, 'M', 'F', NA)
+  )
+  targets <- list(gender = c(M = 0.5, F = 0.5))
+  result <- rake(data, targets, na_method = 'bucket')
+
+  assessment <- weight_assess(
+    data,
+    targets,
+    result$weights,
+    na_method = 'bucket'
+  )
+
+  expect_true('(Missing)' %in% assessment$gender$level)
+})

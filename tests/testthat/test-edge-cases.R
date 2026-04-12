@@ -15,6 +15,30 @@ test_that('rake handles NA values in data', {
   expect_equal(wpct_m, 0.5, tolerance = 1e-3)
 })
 
+test_that('rake can bucket NA values as an implicit missing category', {
+  data <- data.frame(
+    gender = c('M', 'F', 'M', NA, 'F', 'M', NA, 'F', 'M', 'F')
+  )
+  targets <- list(gender = c(M = 0.5, F = 0.5))
+
+  result <- rake(data, targets, na_method = 'bucket')
+
+  expect_true(result$converged)
+
+  w <- result$weights
+  expect_equal(sum(w[is.na(data$gender)]) / sum(w), 0.2, tolerance = 1e-6)
+  expect_equal(
+    sum(w[!is.na(data$gender) & data$gender == 'M']) / sum(w),
+    0.4,
+    tolerance = 1e-6
+  )
+  expect_equal(
+    sum(w[!is.na(data$gender) & data$gender == 'F']) / sum(w),
+    0.4,
+    tolerance = 1e-6
+  )
+})
+
 test_that('rake handles many categories', {
   set.seed(42)
   k <- 10

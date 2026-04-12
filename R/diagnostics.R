@@ -24,11 +24,22 @@ design_effect <- function(weights) {
 #' @param weights Final raked weight vector.
 #' @param base_weights Original base weights before raking.
 #'   If `NULL`, uses uniform weights.
+#' @param na_method How to handle `NA` values.
+#'   `"ignore"` excludes them from that margin.
+#'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named list of tibbles, one per variable.
 #'
 #' @export
-weight_assess <- function(data, targets, weights, base_weights = NULL) {
+weight_assess <- function(
+  data,
+  targets,
+  weights,
+  base_weights = NULL,
+  na_method = c('ignore', 'bucket')
+) {
+  na_method <- match.arg(na_method)
+
   if (is.null(base_weights)) {
     base_weights <- rep(1, nrow(data))
   }
@@ -37,14 +48,33 @@ weight_assess <- function(data, targets, weights, base_weights = NULL) {
 
   for (v in names(targets)) {
     tgt <- targets[[v]]
-    enc <- encode_variable(data[[v]], names(tgt), var_name = v)
-    tgt_ordered <- tgt[enc$level_names]
-    tgt_ordered[is.na(tgt_ordered)] <- 0
+    enc <- encode_variable(
+      data[[v]],
+      names(tgt),
+      var_name = v,
+      na_method = na_method
+    )
+    pre_target <- build_margin_targets(
+      target = tgt,
+      level_names = enc$level_names,
+      codes = enc$codes,
+      weights = base_weights,
+      na_method = na_method,
+      output = 'proportion'
+    )
+    post_target <- build_margin_targets(
+      target = tgt,
+      level_names = enc$level_names,
+      codes = enc$codes,
+      weights = weights,
+      na_method = na_method,
+      output = 'proportion'
+    )
 
     # Unweighted (base weights)
-    pre <- compute_discrepancy_rust(base_weights, enc$codes, tgt_ordered)
+    pre <- compute_discrepancy_rust(base_weights, enc$codes, pre_target)
     # Weighted (raked weights)
-    post <- compute_discrepancy_rust(weights, enc$codes, tgt_ordered)
+    post <- compute_discrepancy_rust(weights, enc$codes, post_target)
 
     level_names <- enc$level_names
     n_levels <- length(level_names)
@@ -60,7 +90,7 @@ weight_assess <- function(data, targets, weights, base_weights = NULL) {
 
     tbl <- tibble::tibble(
       level = level_names,
-      target = as.numeric(tgt_ordered),
+      target = as.numeric(post_target),
       unweighted_n = pre_n,
       unweighted_pct = as.numeric(pre$weighted_pct),
       weighted_n = post_n,

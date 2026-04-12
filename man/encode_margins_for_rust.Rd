@@ -4,7 +4,12 @@
 \alias{encode_margins_for_rust}
 \title{Encode margins list for the Rust raking engine}
 \usage{
-encode_margins_for_rust(data, targets, weights)
+encode_margins_for_rust(
+  data,
+  targets,
+  weights,
+  na_method = c("ignore", "bucket")
+)
 }
 \arguments{
 \item{data}{Data frame.}
