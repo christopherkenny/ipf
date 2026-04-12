@@ -5,7 +5,13 @@ Compute discrepancy between weighted distribution and targets
 ## Usage
 
 ``` r
-compute_discrepancy(data, targets, weights, var_name = NULL)
+compute_discrepancy(
+  data,
+  targets,
+  weights,
+  var_name = NULL,
+  na_method = c("ignore", "bucket")
+)
 ```
 
 ## Arguments
@@ -26,6 +32,11 @@ compute_discrepancy(data, targets, weights, var_name = NULL)
 
   Single variable name to compute discrepancy for. If `NULL`, computes
   for all variables in `targets`.
+
+- na_method:
+
+  How to handle `NA` values. `"ignore"` excludes them from that margin.
+  `"bucket"` treats missing values as an implicit extra category.
 
 ## Value
 

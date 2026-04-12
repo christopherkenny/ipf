@@ -7,7 +7,13 @@ method.
 ## Usage
 
 ``` r
-find_discrepant_vars(data, targets, weights, choosemethod = "total")
+find_discrepant_vars(
+  data,
+  targets,
+  weights,
+  choosemethod = "total",
+  na_method = c("ignore", "bucket")
+)
 ```
 
 ## Arguments
@@ -29,6 +35,11 @@ find_discrepant_vars(data, targets, weights, choosemethod = "total")
   Method for aggregating per-category discrepancies. One of `"total"`,
   `"max"`, `"average"`, `"totalsquared"`, `"maxsquared"`,
   `"averagesquared"`.
+
+- na_method:
+
+  How to handle `NA` values. `"ignore"` excludes them from that margin.
+  `"bucket"` treats missing values as an implicit extra category.
 
 ## Value
 

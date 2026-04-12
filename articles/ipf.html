@@ -116,8 +116,11 @@ where values are missing:</p>
 <span><span class="co">#&gt; $50k-$100k Over $100k Under $50k       &lt;NA&gt; </span></span>
 <span><span class="co">#&gt;        300        389        230         47</span></span></code></pre></div>
 <p>When you define targets, the target names must match the data values
-exactly. <code>NA</code> values are ignored for that variable during
-raking.</p>
+exactly. By default, <code>NA</code> values are ignored for that
+variable during raking. If you use <code>na_method = 'bucket'</code>,
+<code>ipf</code> treats missing values as an implicit extra category and
+preserves their total weight while rescaling the named targets to the
+remaining nonmissing weight mass.</p>
 </div>
 <div class="section level2">
 <h2 id="define-population-targets">Define population targets<a class="anchor" aria-label="anchor" href="#define-population-targets"></a>
@@ -155,13 +158,26 @@ automatically with a warning.</p>
 <span><span class="co">#&gt; ── Raking result (ipf)</span></span>
 <span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (695 iterations, max prop err = 9.83e-07)</span></span>
 <span><span class="co">#&gt; Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
+<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
 <span><span class="co">#&gt; Design effect: 1.176 | Effective n: 822 / 966</span></span>
 <span><span class="co">#&gt; Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424</span></span></code></pre></div>
 <p>That’s it — <code>result</code> is an <code>ipf_rake</code> object
 containing the weights and diagnostics.</p>
+<p>If you want missing values in a raking variable to act like their own
+implicit category, use <code>na_method = 'bucket'</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bucketed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets</span>, cap <span class="op">=</span> <span class="cn">NULL</span>, na_method <span class="op">=</span> <span class="st">'bucket'</span><span class="op">)</span></span>
+<span><span class="va">bucketed</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Raking result (ipf)</span></span>
+<span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (6 iterations, max prop err = 5.46e-07)</span></span>
+<span><span class="co">#&gt; Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
+<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"bucket"</span></span></span>
+<span><span class="co">#&gt; Design effect: 1.114 | Effective n: 867 / 966</span></span>
+<span><span class="co">#&gt; Weight range: [0.199, 1.936] | Mean: 1 | SD: 0.337</span></span></code></pre></div>
 <p>If you already have design weights, pass them through
 <code>base_weights</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">base_w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">anes24</span><span class="op">$</span><span class="va">sex</span> <span class="op">==</span> <span class="st">'Female'</span>, <span class="fl">1.1</span>, <span class="fl">0.9</span><span class="op">)</span></span>
 <span><span class="va">base_w</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">base_w</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span></span>
@@ -171,6 +187,7 @@ containing the weights and diagnostics.</p>
 <span><span class="co">#&gt; ── Raking result (ipf)</span></span>
 <span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (696 iterations, max prop err = 9.87e-07)</span></span>
 <span><span class="co">#&gt; Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
+<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
 <span><span class="co">#&gt; Design effect: 1.176 | Effective n: 822 / 966</span></span>
 <span><span class="co">#&gt; Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424</span></span></code></pre></div>
 </div>
@@ -183,7 +200,7 @@ containing the weights and diagnostics.</p>
 <p>The design effect measures how much the weighting inflates variance.
 A deff of 1.0 means no inflation (uniform weights); higher values mean
 less effective data.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $deff</span></span>
 <span><span class="co">#&gt; [1] 1.175752</span></span>
@@ -195,7 +212,7 @@ less effective data.</p>
 <h3 id="per-variable-diagnostics">Per-variable diagnostics<a class="anchor" aria-label="anchor" href="#per-variable-diagnostics"></a>
 </h3>
 <p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> shows a full diagnostic report:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking Summary (ipf)</span></span>
@@ -203,6 +220,7 @@ less effective data.</p>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Converged in 695 iterations (max prop err = 9.83e-07)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> No base weights (uniform)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Selection: type = <span style="color: #0000BB;">"nolim"</span>, method = <span style="color: #0000BB;">"total"</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
 <span><span class="co">#&gt; ── Weight Summary ──────────────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; Min: 0.0505 Q1: 0.6768 Median: 1.0292 Mean: 1.0104 Q3: 1.3194 Max: 3.793</span></span>
@@ -248,7 +266,7 @@ weighted distribution is to the target.</p>
 <h3 id="tidy-output">Tidy output<a class="anchor" aria-label="anchor" href="#tidy-output"></a>
 </h3>
 <p>For programmatic use, the broom-style methods return tibbles:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># One row per variable-level</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 5</span></span></span>
@@ -277,7 +295,7 @@ weighted distribution is to the target.</p>
 </h3>
 <p>To use the weights in downstream analyses, attach them to your
 data:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">weighted_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">weighted_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
@@ -293,7 +311,7 @@ data:</p>
 analyses.</p>
 <p>For example, you can compare an estimate before and after
 weighting:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">presidential_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">weighted_data</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">presidential</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">presidential_unweighted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/proportions.html" class="external-link">prop.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">presidential_data</span><span class="op">$</span><span class="va">presidential</span><span class="op">)</span><span class="op">)</span></span>
@@ -330,7 +348,7 @@ weighting:</p>
 </h3>
 <p>By default, weights are capped at 5. Tighter bounds reduce extreme
 weights but can leave more residual mismatch.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Unbounded fit from above</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.05047476 3.79304942</span></span>
@@ -373,7 +391,7 @@ weights but can leave more residual mismatch.</p>
 </h3>
 <p>With many potential raking variables, you can let <code>ipf</code>
 select only the most discrepant ones:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">targets_many</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  sex <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>Male <span class="op">=</span> <span class="fl">0.472</span>, Female <span class="op">=</span> <span class="fl">0.528</span><span class="op">)</span>,</span>
 <span>  race <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
@@ -396,8 +414,8 @@ select only the most discrepant ones:</p>
 <span><span class="co"># Only rake on variables where discrepancy exceeds 5%</span></span>
 <span><span class="va">result_pct</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets_many</span>, type <span class="op">=</span> <span class="st">'pctlim'</span>, pctlim <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
 <span><span class="va">result_pct</span><span class="op">$</span><span class="va">vars_used</span></span>
-<span><span class="co">#&gt; [1] "race"    "income"  "married"</span></span></code></pre></div>
-<p>Use <code>type = "nlim"</code> to select the top N most discrepant
+<span><span class="co">#&gt; [1] "race"    "income"  "married" "sex"</span></span></code></pre></div>
+<p>Use <code>type = 'nlim'</code> to select the top N most discrepant
 variables, or <code>iterate = TRUE</code> to re-check after each round
 and add newly discrepant variables.</p>
 </div>
@@ -405,7 +423,7 @@ and add newly discrepant variables.</p>
 <h3 id="checking-discrepancies-directly">Checking discrepancies directly<a class="anchor" aria-label="anchor" href="#checking-discrepancies-directly"></a>
 </h3>
 <p>You can inspect raw discrepancy scores without raking:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/find_discrepant_vars.html">find_discrepant_vars</a></span><span class="op">(</span></span>
 <span>  <span class="va">anes24</span>,</span>
 <span>  <span class="va">targets_many</span>,</span>

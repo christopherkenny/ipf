@@ -18,7 +18,8 @@ rake(
   nlim = 5L,
   choosemethod = c("total", "max", "average", "totalsquared", "maxsquared",
     "averagesquared"),
-  iterate = FALSE,
+  na_method = c("ignore", "bucket"),
+  iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-06,
   verbose = FALSE,
@@ -81,11 +82,19 @@ rake(
   variable score. One of `"total"`, `"max"`, `"average"`,
   `"totalsquared"`, `"maxsquared"`, `"averagesquared"`.
 
+- na_method:
+
+  How to handle `NA` values in raking variables. `"ignore"` excludes
+  missing cases from that variable's margin update. `"bucket"` treats
+  missing values as an implicit extra category whose total weight is
+  preserved while the named targets are rescaled to the remaining
+  nonmissing weight mass.
+
 - iterate:
 
   Logical. If `TRUE` and `type = "pctlim"`, re-check discrepancies after
   raking and add newly discrepant variables, repeating up to 10 times.
-  Default `FALSE`.
+  Default `TRUE`.
 
 - max_iter:
 
@@ -124,7 +133,7 @@ An `ipf_rake` object (S3 class) containing:
 
 - `base_weights`: original base weights
 
-- `type`, `choosemethod`, `cap`: settings used
+- `type`, `choosemethod`, `na_method`, `cap`: settings used
 
 - `deff`, `n_eff`: design effect and effective sample size
 
@@ -147,6 +156,7 @@ print(result)
 #> ── Raking result (ipf) 
 #> Converged: Yes (3 iterations, max prop err = 5e-08)
 #> Variables raked: "gender" and "age"
+#> Missing handling: "ignore"
 #> Design effect: 1.115 | Effective n: 90 / 100
 #> Weight range: [0.742, 1.517] | Mean: 1 | SD: 0.339
 ```

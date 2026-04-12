@@ -1,12 +1,18 @@
 # Encode a variable to integer codes for the Rust raking engine
 
 Converts factor, character, logical, or integer variables to 1-based
-integer codes. NAs become 0 (ignored by the Rust core).
+integer codes. NAs either become 0 (ignored by the Rust core) or an
+explicit missing bucket.
 
 ## Usage
 
 ``` r
-encode_variable(x, target_names, var_name = "variable")
+encode_variable(
+  x,
+  target_names,
+  var_name = "variable",
+  na_method = c("ignore", "bucket")
+)
 ```
 
 ## Arguments
@@ -22,6 +28,11 @@ encode_variable(x, target_names, var_name = "variable")
 - var_name:
 
   Name of the variable (for error messages).
+
+- na_method:
+
+  How to handle `NA` values. `"ignore"` excludes them from that margin.
+  `"bucket"` treats missing values as an implicit extra category.
 
 ## Value
 

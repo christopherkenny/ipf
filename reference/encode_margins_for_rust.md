@@ -5,7 +5,12 @@ Encode margins list for the Rust raking engine
 ## Usage
 
 ``` r
-encode_margins_for_rust(data, targets, weights)
+encode_margins_for_rust(
+  data,
+  targets,
+  weights,
+  na_method = c("ignore", "bucket")
+)
 ```
 
 ## Arguments

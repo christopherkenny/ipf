@@ -62,7 +62,10 @@ table(anes24$income, useNA = 'ifany')
 ```
 
 When you define targets, the target names must match the data values
-exactly. `NA` values are ignored for that variable during raking.
+exactly. By default, `NA` values are ignored for that variable during
+raking. If you use `na_method = 'bucket'`, `ipf` treats missing values
+as an implicit extra category and preserves their total weight while
+rescaling the named targets to the remaining nonmissing weight mass.
 
 ## Define population targets
 
@@ -103,12 +106,28 @@ result
 #> ── Raking result (ipf)
 #> Converged: Yes (695 iterations, max prop err = 9.83e-07)
 #> Variables raked: "sex", "race", and "income"
+#> Missing handling: "ignore"
 #> Design effect: 1.176 | Effective n: 822 / 966
 #> Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424
 ```
 
 That’s it — `result` is an `ipf_rake` object containing the weights and
 diagnostics.
+
+If you want missing values in a raking variable to act like their own
+implicit category, use `na_method = 'bucket'`:
+
+``` r
+bucketed <- rake(anes24, targets, cap = NULL, na_method = 'bucket')
+bucketed
+#> 
+#> ── Raking result (ipf)
+#> Converged: Yes (6 iterations, max prop err = 5.46e-07)
+#> Variables raked: "sex", "race", and "income"
+#> Missing handling: "bucket"
+#> Design effect: 1.114 | Effective n: 867 / 966
+#> Weight range: [0.199, 1.936] | Mean: 1 | SD: 0.337
+```
 
 If you already have design weights, pass them through `base_weights`:
 
@@ -122,6 +141,7 @@ base_weighted
 #> ── Raking result (ipf)
 #> Converged: Yes (696 iterations, max prop err = 9.87e-07)
 #> Variables raked: "sex", "race", and "income"
+#> Missing handling: "ignore"
 #> Design effect: 1.176 | Effective n: 822 / 966
 #> Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424
 ```
@@ -156,6 +176,7 @@ summary(result)
 #> ✔ Converged in 695 iterations (max prop err = 9.83e-07)
 #> ℹ No base weights (uniform)
 #> ℹ Selection: type = "nolim", method = "total"
+#> ℹ Missing handling: "ignore"
 #> ℹ Variables raked: "sex", "race", and "income"
 #> ── Weight Summary ──────────────────────────────────────────────────────────────
 #> Min: 0.0505 Q1: 0.6768 Median: 1.0292 Mean: 1.0104 Q3: 1.3194 Max: 3.793
@@ -353,10 +374,10 @@ targets_many <- list(
 # Only rake on variables where discrepancy exceeds 5%
 result_pct <- rake(anes24, targets_many, type = 'pctlim', pctlim = 0.05)
 result_pct$vars_used
-#> [1] "race"    "income"  "married"
+#> [1] "race"    "income"  "married" "sex"
 ```
 
-Use `type = "nlim"` to select the top N most discrepant variables, or
+Use `type = 'nlim'` to select the top N most discrepant variables, or
 `iterate = TRUE` to re-check after each round and add newly discrepant
 variables.
 

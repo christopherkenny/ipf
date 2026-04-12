@@ -16,6 +16,7 @@ new_ipf_rake(
   base_weights,
   type,
   choosemethod,
+  na_method,
   cap,
   deff,
   n_eff,
@@ -64,6 +65,10 @@ new_ipf_rake(
 - choosemethod:
 
   Discrepancy aggregation method.
+
+- na_method:
+
+  Missing-data handling method.
 
 - cap:
 

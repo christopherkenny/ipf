@@ -6,7 +6,13 @@ to unweighted and weighted distributions.
 ## Usage
 
 ``` r
-weight_assess(data, targets, weights, base_weights = NULL)
+weight_assess(
+  data,
+  targets,
+  weights,
+  base_weights = NULL,
+  na_method = c("ignore", "bucket")
+)
 ```
 
 ## Arguments
@@ -26,6 +32,11 @@ weight_assess(data, targets, weights, base_weights = NULL)
 - base_weights:
 
   Original base weights before raking. If `NULL`, uses uniform weights.
+
+- na_method:
+
+  How to handle `NA` values. `"ignore"` excludes them from that margin.
+  `"bucket"` treats missing values as an implicit extra category.
 
 ## Value
 
