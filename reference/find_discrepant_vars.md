@@ -44,3 +44,19 @@ find_discrepant_vars(
 ## Value
 
 Named numeric vector of aggregate discrepancy per variable.
+
+## Examples
+
+``` r
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4)),
+  age = sample(c('young', 'old'), 100, replace = TRUE, prob = c(0.7, 0.3))
+)
+targets <- list(
+  gender = c(M = 0.5, F = 0.5),
+  age = c(young = 0.6, old = 0.4)
+)
+find_discrepant_vars(data, targets, weights = rep(1, 100))
+#> gender    age 
+#>   0.00   0.16 
+```

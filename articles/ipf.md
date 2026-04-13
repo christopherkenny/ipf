@@ -5,12 +5,13 @@
 Survey samples rarely match the population perfectly on key
 demographics. **Raking** (iterative proportional fitting) adjusts case
 weights so that the weighted sample margins match known population
-targets. `ipf` makes this fast and straightforward, with a Rust
-computational core and a clean R interface.
+targets. `ipf` makes this fast by using Rust to perform all
+computations.
 
 This vignette walks through a complete raking workflow using the bundled
-`anes24` dataset — a subset of the 2024 American National Election
-Study.
+`anes24` dataset, which is taken from a subset of the 2024 American
+National Election Study
+<https://electionstudies.org/data-center/2024-time-series-study/>.
 
 ## Setup
 
@@ -111,8 +112,7 @@ result
 #> Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424
 ```
 
-That’s it — `result` is an `ipf_rake` object containing the weights and
-diagnostics.
+`result` is an `ipf_rake` object containing the weights and diagnostics.
 
 If you want missing values in a raking variable to act like their own
 implicit category, use `na_method = 'bucket'`:
@@ -151,7 +151,7 @@ base_weighted
 ### Design effect
 
 The design effect measures how much the weighting inflates variance. A
-deff of 1.0 means no inflation (uniform weights); higher values mean
+deff of 1.0 means no inflation (uniform weights). Higher values mean
 less effective data.
 
 ``` r
@@ -222,7 +222,7 @@ distribution is to the target.
 
 ### Tidy output
 
-For programmatic use, the broom-style methods return tibbles:
+For programmatic use, the `broom`-style methods return `tibble`s:
 
 ``` r
 # One row per variable-level

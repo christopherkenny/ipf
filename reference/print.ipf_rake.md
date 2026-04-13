@@ -22,3 +22,21 @@ print(x, ...)
 ## Value
 
 Invisibly returns `x`.
+
+## Examples
+
+``` r
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+print(result)
+#> 
+#> ── Raking result (ipf) 
+#> Converged: Yes (1 iterations, max prop err = 7.11e-16)
+#> Variables raked: "gender"
+#> Missing handling: "ignore"
+#> Design effect: 1.085 | Effective n: 92 / 100
+#> Weight range: [0.781, 1.389] | Mean: 1 | SD: 0.292
+```

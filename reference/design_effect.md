@@ -18,3 +18,16 @@ design_effect(weights)
 ## Value
 
 A list with `deff` (design effect) and `n_eff` (effective sample size).
+
+## Examples
+
+``` r
+w <- c(1.2, 0.8, 1.5, 0.5, 1.0)
+design_effect(w)
+#> $deff
+#> [1] 1.116
+#> 
+#> $n_eff
+#> [1] 4.480287
+#> 
+```

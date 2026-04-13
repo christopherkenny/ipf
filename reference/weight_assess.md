@@ -41,3 +41,23 @@ weight_assess(
 ## Value
 
 Named list of tibbles, one per variable.
+
+## Examples
+
+``` r
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+weight_assess(data, targets, result$weights)
+#> $gender
+#> # A tibble: 3 × 9
+#>   level target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
+#>   <chr>  <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
+#> 1 M        0.5           59           0.59         50          0.5      -0.09
+#> 2 F        0.5           41           0.41         50          0.5       0.09
+#> 3 Total    1            100           1           100          1         0.18
+#> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
+#> 
+```
