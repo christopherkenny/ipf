@@ -17,3 +17,12 @@ A tibble with columns: \code{variable}, \code{level}, \code{target}, \code{weigh
 \description{
 Returns a one-row-per-variable-per-level tibble with target proportions, weighted proportions, and discrepancy.
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+tidy(result)
+
+}

@@ -14,7 +14,7 @@
 #'   - `codes`: integer vector (0 = NA, 1..L = categories)
 #'   - `level_names`: character vector of level names in order
 #'
-#' @keywords internal
+#' @noRd
 encode_variable <- function(
   x,
   target_names,
@@ -100,7 +100,8 @@ build_margin_targets <- function(
     if (output == 'proportion') {
       grand_total <- sum(weights)
       if (grand_total > 0) {
-        target_vec[names(target)] <- as.numeric(target) * (observed_total / grand_total)
+        target_vec[names(target)] <- as.numeric(target) *
+          (observed_total / grand_total)
         target_vec[missing_index] <- missing_weight / grand_total
       }
     } else {
@@ -124,7 +125,7 @@ build_margin_targets <- function(
 #'
 #' @return Normalized targets list (each summing to 1).
 #'
-#' @keywords internal
+#' @noRd
 encode_targets <- function(targets, data) {
   if (!is.list(targets) || is.null(names(targets))) {
     cli::cli_abort(

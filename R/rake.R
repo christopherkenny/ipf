@@ -58,6 +58,7 @@
 #'   - `type`, `choosemethod`, `na_method`, `cap`: settings used
 #'   - `deff`, `n_eff`: design effect and effective sample size
 #'   - `diagnostics`: tibble of per-iteration diagnostics
+#' @export
 #'
 #' @examples
 #' data <- data.frame(
@@ -70,8 +71,6 @@
 #' )
 #' result <- rake(data, targets)
 #' print(result)
-#'
-#' @export
 rake <- function(
   data,
   targets,
@@ -96,7 +95,7 @@ rake <- function(
   verbose = FALSE,
   diagnostics_every = 0L
 ) {
-  # --- Validation ---
+  # Validation
   if (!is.data.frame(data)) {
     cli::cli_abort('{.arg data} must be a data frame.')
   }
@@ -106,7 +105,7 @@ rake <- function(
 
   n <- nrow(data)
 
-  # --- Base weights ---
+  # Base weights
   if (is.null(base_weights)) {
     base_weights <- rep(1.0, n)
   } else {
@@ -129,10 +128,10 @@ rake <- function(
   # Center base weights to mean 1
   base_weights <- base_weights / mean(base_weights)
 
-  # --- Targets ---
+  # Targets
   targets <- encode_targets(targets, data)
 
-  # --- Bounds ---
+  # Bounds
   if (!is.null(bounds)) {
     bounds <- as.numeric(bounds)
     if (length(bounds) != 2) {
@@ -149,7 +148,7 @@ rake <- function(
     NULL
   }
 
-  # --- Variable selection ---
+  # Variable selection
   active_targets <- targets
   if (type == 'pctlim') {
     disc_scores <- find_discrepant_vars(
@@ -180,7 +179,7 @@ rake <- function(
     active_targets <- targets[names(top_n)]
   }
 
-  # --- Encode margins for Rust ---
+  # Encode margins for Rust
   grand_total <- sum(base_weights)
   rust_margins <- encode_margins_for_rust(
     data,
@@ -189,7 +188,7 @@ rake <- function(
     na_method = na_method
   )
 
-  # --- Call Rust core ---
+  # Call Rust core
   res <- rake_ipf_rust(
     weights = base_weights,
     margins = rust_margins,
@@ -204,7 +203,7 @@ rake <- function(
   final_weights <- as.numeric(res$weights)
   vars_used <- names(active_targets)
 
-  # --- Iterative re-raking (pctlim only) ---
+  # Iterative re-raking (pctlim only)
   if (isTRUE(iterate) && type == 'pctlim') {
     for (iter_round in seq_len(10)) {
       new_disc <- find_discrepant_vars(
@@ -252,10 +251,10 @@ rake <- function(
     }
   }
 
-  # --- Design effect ---
+  # Design effect
   de <- design_effect_rust(final_weights)
 
-  # --- Diagnostics tibble ---
+  # Diagnostics tibble
   diag <- tibble::tibble(
     iteration = as.integer(res$diagnostics$iteration),
     margin_index = as.integer(res$diagnostics$margin_index),
@@ -265,7 +264,7 @@ rake <- function(
     prop_err = as.numeric(res$diagnostics$prop_err)
   )
 
-  # --- Build output ---
+  # Build output
   new_ipf_rake(
     weights = final_weights,
     data = data,
@@ -293,7 +292,7 @@ rake <- function(
 #'
 #' @return List of margin lists, each with `$levels` and `$targets`.
 #'
-#' @keywords internal
+#' @noRd
 encode_margins_for_rust <- function(
   data,
   targets,

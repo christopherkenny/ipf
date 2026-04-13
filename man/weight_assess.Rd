@@ -32,3 +32,11 @@ Named list of tibbles, one per variable.
 \description{
 Produces a per-variable diagnostic table comparing target distributions to unweighted and weighted distributions.
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+weight_assess(data, targets, result$weights)
+}

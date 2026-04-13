@@ -32,3 +32,14 @@ Named numeric vector of aggregate discrepancy per variable.
 \description{
 Calculates discrepancy between the current weighted distribution and target distributions for each variable, then aggregates using the chosen method.
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4)),
+  age = sample(c('young', 'old'), 100, replace = TRUE, prob = c(0.7, 0.3))
+)
+targets <- list(
+  gender = c(M = 0.5, F = 0.5),
+  age = c(young = 0.6, old = 0.4)
+)
+find_discrepant_vars(data, targets, weights = rep(1, 100))
+}

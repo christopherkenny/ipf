@@ -114,5 +114,4 @@ targets <- list(
 )
 result <- rake(data, targets)
 print(result)
-
 }

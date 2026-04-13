@@ -7,6 +7,14 @@
 #'
 #' @return A tibble with columns: `variable`, `level`, `target`, `weighted_pct`, `discrepancy`.
 #'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' tidy(result)
+#'
 #' @importFrom generics tidy
 #' @exportS3Method
 tidy.ipf_rake <- function(x, ...) {
@@ -47,6 +55,14 @@ generics::tidy
 #'
 #' @return A single-row tibble with columns: `converged`, `iterations`, `max_prop_err`, `deff`, `n_eff`, `n_obs`, `n_vars`.
 #'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' glance(result)
+#'
 #' @importFrom generics glance
 #' @exportS3Method
 glance.ipf_rake <- function(x, ...) {
@@ -73,6 +89,14 @@ generics::glance
 #' @param ... Additional arguments (ignored).
 #'
 #' @return A tibble with all original columns plus `.weight`.
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' augment(result)
 #'
 #' @importFrom generics augment
 #' @exportS3Method

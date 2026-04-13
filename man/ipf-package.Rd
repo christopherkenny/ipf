@@ -6,6 +6,8 @@
 \alias{ipf-package}
 \title{ipf: Iterative Proportional Fitting (Raking) with a Rust Backend}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Fast iterative proportional fitting (raking) for survey weighting. The computational core is written in Rust for speed and numerical stability. Supports multiple raking variables, automatic variable selection, weight bounding, and comprehensive diagnostics.
 }
 \seealso{

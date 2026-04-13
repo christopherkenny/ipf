@@ -16,3 +16,7 @@ A list with \code{deff} (design effect) and \code{n_eff} (effective sample size)
 The design effect (deff) measures the variance inflation factor due to unequal weighting.
 The effective sample size is \code{n / deff}.
 }
+\examples{
+w <- c(1.2, 0.8, 1.5, 0.5, 1.0)
+design_effect(w)
+}

@@ -17,3 +17,12 @@ A tibble with all original columns plus \code{.weight}.
 \description{
 Returns the original data frame with a \code{.weight} column appended.
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+augment(result)
+
+}

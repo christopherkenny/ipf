@@ -18,7 +18,7 @@
 #'
 #' @return An `ipf_rake` S3 object.
 #'
-#' @keywords internal
+#' @noRd
 new_ipf_rake <- function(
   weights,
   data,
@@ -64,8 +64,15 @@ new_ipf_rake <- function(
 #' @param ... Additional arguments (ignored).
 #'
 #' @return Invisibly returns `x`.
-#'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' print(result)
 print.ipf_rake <- function(x, ...) {
   n <- length(x$weights)
   ws <- weight_summary_rust(x$weights)
@@ -100,8 +107,15 @@ print.ipf_rake <- function(x, ...) {
 #' @param ... Additional arguments (ignored).
 #'
 #' @return Invisibly returns a list with convergence info, weight summary, design effect, and per-variable assessment tibbles.
-#'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' summary(result)
 summary.ipf_rake <- function(object, ...) {
   ws <- weight_summary_rust(object$weights)
   assessment <- weight_assess(

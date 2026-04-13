@@ -11,7 +11,7 @@
 #'
 #' @return Named list with `weighted_pct` and `discrepancy` vectors per variable.
 #'
-#' @keywords internal
+#' @noRd
 compute_discrepancy <- function(
   data,
   targets,
@@ -62,8 +62,18 @@ compute_discrepancy <- function(
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named numeric vector of aggregate discrepancy per variable.
-#'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4)),
+#'   age = sample(c('young', 'old'), 100, replace = TRUE, prob = c(0.7, 0.3))
+#' )
+#' targets <- list(
+#'   gender = c(M = 0.5, F = 0.5),
+#'   age = c(young = 0.6, old = 0.4)
+#' )
+#' find_discrepant_vars(data, targets, weights = rep(1, 100))
 find_discrepant_vars <- function(
   data,
   targets,
@@ -93,7 +103,8 @@ find_discrepant_vars <- function(
     disc_list,
     function(d) {
       disc <- d$discrepancy
-      switch(choosemethod,
+      switch(
+        choosemethod,
         total = sum(abs(disc)),
         max = max(abs(disc)),
         average = mean(abs(disc)),

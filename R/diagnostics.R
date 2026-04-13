@@ -6,8 +6,11 @@
 #' @param weights Numeric weight vector.
 #'
 #' @return A list with `deff` (design effect) and `n_eff` (effective sample size).
-#'
 #' @export
+#'
+#' @examples
+#' w <- c(1.2, 0.8, 1.5, 0.5, 1.0)
+#' design_effect(w)
 design_effect <- function(weights) {
   if (!is.numeric(weights)) {
     cli::cli_abort('{.arg weights} must be numeric.')
@@ -29,8 +32,15 @@ design_effect <- function(weights) {
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named list of tibbles, one per variable.
-#'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(
+#'   gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+#' )
+#' targets <- list(gender = c(M = 0.5, F = 0.5))
+#' result <- rake(data, targets)
+#' weight_assess(data, targets, result$weights)
 weight_assess <- function(
   data,
   targets,

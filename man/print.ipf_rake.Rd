@@ -17,3 +17,11 @@ Invisibly returns \code{x}.
 \description{
 Print an ipf_rake object
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+print(result)
+}

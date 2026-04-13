@@ -17,3 +17,11 @@ Invisibly returns a list with convergence info, weight summary, design effect, a
 \description{
 Produces a detailed summary including per-variable diagnostic tables showing target vs. achieved distributions.
 }
+\examples{
+data <- data.frame(
+  gender = sample(c('M', 'F'), 100, replace = TRUE, prob = c(0.6, 0.4))
+)
+targets <- list(gender = c(M = 0.5, F = 0.5))
+result <- rake(data, targets)
+summary(result)
+}
