@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Iterative Proportional Fitting (Raking) with a Rust Backend">
 <meta name="description" content="Fast iterative proportional fitting (raking) for survey weighting. The computational core is written in Rust for speed and numerical stability. Supports multiple raking variables, automatic variable selection, weight bounding, and comprehensive diagnostics.">
 <meta property="og:description" content="Fast iterative proportional fitting (raking) for survey weighting. The computational core is written in Rust for speed and numerical stability. Supports multiple raking variables, automatic variable selection, weight bounding, and comprehensive diagnostics.">
+<meta property="og:image" content="http://christophertkenny.com/ipf/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -46,8 +47,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="ipf">ipf<a class="anchor" aria-label="anchor" href="#ipf"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="ipf-">ipf 
+<a class="anchor" aria-label="anchor" href="#ipf-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 <!-- badges: end -->
 <p><code>ipf</code> provides fast iterative proportional fitting (raking) for survey weighting. The computational core is written in Rust for speed and numerical stability. It supports multiple raking variables, automatic variable selection, weight bounding, and comprehensive diagnostics.</p>
@@ -82,28 +86,34 @@
 <span></span>
 <span><span class="co"># Rake</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Variable `race`: target levels "Native American" have no observations in data</span></span>
+<span><span class="co">#&gt; (zero-cell).</span></span>
 <span><span class="va">result</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking result (ipf)</span></span>
-<span><span class="co">#&gt; Converged: Yes (539 iterations, max prop err = 1e-06)</span></span>
+<span><span class="co">#&gt; Converged: No (1000 iterations, max prop err = 1)</span></span>
 <span><span class="co">#&gt; Variables raked: "sex" and "race"</span></span>
-<span><span class="co">#&gt; Design effect: 1.145 | Effective n: 844 / 966</span></span>
-<span><span class="co">#&gt; Weight range: [0.161, 3.226] | Mean: 1.008 | SD: 0.384</span></span></code></pre></div>
+<span><span class="co">#&gt; Missing handling: "ignore"</span></span>
+<span><span class="co">#&gt; Design effect: 1.133 | Effective n: 853 / 966</span></span>
+<span><span class="co">#&gt; Weight range: [0.152, 2.082] | Mean: 1.004 | SD: 0.366</span></span></code></pre></div>
 <p>Examine per-variable diagnostics with <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Variable `race`: target levels "Native American" have no observations in data</span></span>
+<span><span class="co">#&gt; (zero-cell).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking Summary (ipf)</span></span>
 <span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; ✔ Converged in 539 iterations (max prop err = 1e-06)</span></span>
+<span><span class="co">#&gt; ✖ Did NOT converge after 1000 iterations (max prop err = 1)</span></span>
 <span><span class="co">#&gt; ℹ No base weights (uniform)</span></span>
 <span><span class="co">#&gt; ℹ Selection: type = "nolim", method = "total"</span></span>
+<span><span class="co">#&gt; ℹ Missing handling: "ignore"</span></span>
 <span><span class="co">#&gt; ℹ Variables raked: "sex" and "race"</span></span>
 <span><span class="co">#&gt; ── Weight Summary ──────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; Min: 0.1606 Q1: 0.8977 Median: 0.9024 Mean: 1.008 Q3: 1.1396 Max: 3.2257</span></span>
-<span><span class="co">#&gt; SD: 0.3836 CV: 0.3805</span></span>
+<span><span class="co">#&gt; Min: 0.1519 Q1: 0.8946 Median: 0.9112 Mean: 1.0044 Q3: 1.1395 Max: 2.0822</span></span>
+<span><span class="co">#&gt; SD: 0.366 CV: 0.3644</span></span>
 <span><span class="co">#&gt; ── Design Effect ───────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; Deff: 1.1448 | Effective n: 844 / 966</span></span>
+<span><span class="co">#&gt; Deff: 1.1328 | Effective n: 853 / 966</span></span>
 <span><span class="co">#&gt; ── Per-Variable Assessment ─────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── sex</span></span>
@@ -112,20 +122,20 @@
 <span><span class="co">#&gt;   &lt;chr&gt;   &lt;dbl&gt;        &lt;dbl&gt;          &lt;dbl&gt;      &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 Male     0.48          458          0.477       464.        0.480    0.00341</span></span>
 <span><span class="co">#&gt; 2 Female   0.52          503          0.523       502.        0.520   -0.00341</span></span>
-<span><span class="co">#&gt; 3 Total    1             961          1           966.        1.000    0.00683</span></span>
+<span><span class="co">#&gt; 3 Total    1             961          1           966.        1.00     0.00683</span></span>
 <span><span class="co">#&gt; # ℹ 2 more variables: residual_disc &lt;dbl&gt;, original_disc &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── race</span></span>
 <span><span class="co">#&gt; # A tibble: 7 × 9</span></span>
 <span><span class="co">#&gt;   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;     &lt;dbl&gt;        &lt;dbl&gt;          &lt;dbl&gt;      &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 White      0.59          632        0.662       570.        0.590     -0.0718 </span></span>
-<span><span class="co">#&gt; 2 Black      0.14          118        0.124       135.        0.140      0.0164 </span></span>
-<span><span class="co">#&gt; 3 Hispanic   0.19          114        0.119       184.        0.190      0.0706 </span></span>
-<span><span class="co">#&gt; 4 Asian      0.06           28        0.0293       58.0       0.0600     0.0307 </span></span>
-<span><span class="co">#&gt; 5 Native …   0.01            3        0.00314       9.66      0.01000    0.00686</span></span>
-<span><span class="co">#&gt; 6 Other      0.01           60        0.0628        9.66      0.01000   -0.0528 </span></span>
-<span><span class="co">#&gt; 7 Total      1             955        1           966.        1.000      0.249  </span></span>
+<span><span class="co">#&gt; 1 White      0.59          632         0.662      570.         0.596     -0.0658</span></span>
+<span><span class="co">#&gt; 2 Black      0.14          118         0.124      135.         0.141      0.0179</span></span>
+<span><span class="co">#&gt; 3 Hispanic   0.19          114         0.119      184.         0.192      0.0725</span></span>
+<span><span class="co">#&gt; 4 Asian      0.06           28         0.0293      58.0        0.0606     0.0313</span></span>
+<span><span class="co">#&gt; 5 Native …   0.01            0         0            0          0          0     </span></span>
+<span><span class="co">#&gt; 6 Other      0.01           63         0.0660       9.66       0.0101    -0.0559</span></span>
+<span><span class="co">#&gt; 7 Total      1             955         1          956.         1.00       0.243 </span></span>
 <span><span class="co">#&gt; # ℹ 2 more variables: residual_disc &lt;dbl&gt;, original_disc &lt;dbl&gt;</span></span></code></pre></div>
 <p>Extract weights for downstream analysis:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -134,38 +144,40 @@
 <span><span class="co">#&gt; # A tibble: 966 × 3</span></span>
 <span><span class="co">#&gt;    sex    race     .weight</span></span>
 <span><span class="co">#&gt;    &lt;chr&gt;  &lt;chr&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt;  1 Female White      0.898</span></span>
-<span><span class="co">#&gt;  2 Male   White      0.902</span></span>
-<span><span class="co">#&gt;  3 Female White      0.898</span></span>
-<span><span class="co">#&gt;  4 Male   &lt;NA&gt;       0.706</span></span>
+<span><span class="co">#&gt;  1 Female White      0.895</span></span>
+<span><span class="co">#&gt;  2 Male   White      0.911</span></span>
+<span><span class="co">#&gt;  3 Female White      0.895</span></span>
+<span><span class="co">#&gt;  4 Male   &lt;NA&gt;       1.29 </span></span>
 <span><span class="co">#&gt;  5 Female Black      1.14 </span></span>
-<span><span class="co">#&gt;  6 Male   White      0.902</span></span>
-<span><span class="co">#&gt;  7 Male   Black      1.15 </span></span>
-<span><span class="co">#&gt;  8 Male   Hispanic   1.61 </span></span>
-<span><span class="co">#&gt;  9 Male   White      0.902</span></span>
-<span><span class="co">#&gt; 10 Female White      0.898</span></span>
+<span><span class="co">#&gt;  6 Male   White      0.911</span></span>
+<span><span class="co">#&gt;  7 Male   Black      1.16 </span></span>
+<span><span class="co">#&gt;  8 Male   Hispanic   1.63 </span></span>
+<span><span class="co">#&gt;  9 Male   White      0.911</span></span>
+<span><span class="co">#&gt; 10 Female White      0.895</span></span>
 <span><span class="co">#&gt; # ℹ 956 more rows</span></span></code></pre></div>
 <p>Get a tidy one-row-per-level view:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Variable `race`: target levels "Native American" have no observations in data</span></span>
+<span><span class="co">#&gt; (zero-cell).</span></span>
 <span><span class="co">#&gt; # A tibble: 8 × 5</span></span>
 <span><span class="co">#&gt;   variable level           target weighted_pct discrepancy</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;    &lt;chr&gt;            &lt;dbl&gt;        &lt;dbl&gt;       &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 sex      Male              0.48      0.480     -1.88e- 9</span></span>
-<span><span class="co">#&gt; 2 sex      Female            0.52      0.520      1.88e- 9</span></span>
-<span><span class="co">#&gt; 3 race     White             0.59      0.590      1.89e-15</span></span>
-<span><span class="co">#&gt; 4 race     Black             0.14      0.140      1.39e-15</span></span>
-<span><span class="co">#&gt; 5 race     Hispanic          0.19      0.190      1.78e-15</span></span>
-<span><span class="co">#&gt; 6 race     Asian             0.06      0.0600     5.48e-16</span></span>
-<span><span class="co">#&gt; 7 race     Native American   0.01      0.01000    9.71e-17</span></span>
-<span><span class="co">#&gt; 8 race     Other             0.01      0.01000    8.85e-17</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 sex      Male              0.48       0.480     7.33e-14</span></span>
+<span><span class="co">#&gt; 2 sex      Female            0.52       0.520    -9.15e-14</span></span>
+<span><span class="co">#&gt; 3 race     White             0.59       0.596    -5.96e- 3</span></span>
+<span><span class="co">#&gt; 4 race     Black             0.14       0.141    -1.41e- 3</span></span>
+<span><span class="co">#&gt; 5 race     Hispanic          0.19       0.192    -1.92e- 3</span></span>
+<span><span class="co">#&gt; 6 race     Asian             0.06       0.0606   -6.06e- 4</span></span>
+<span><span class="co">#&gt; 7 race     Native American   0.01       0         1   e- 2</span></span>
+<span><span class="co">#&gt; 8 race     Other             0.01       0.0101   -1.01e- 4</span></span></code></pre></div>
 <p>Or a single-row model summary:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 7</span></span>
 <span><span class="co">#&gt;   converged iterations max_prop_err  deff n_eff n_obs n_vars</span></span>
 <span><span class="co">#&gt;   &lt;lgl&gt;          &lt;int&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;  &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 TRUE             539  0.000001000  1.14  844.   966      2</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 FALSE           1000            1  1.13  853.   966      2</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
