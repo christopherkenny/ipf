@@ -34,9 +34,9 @@ result <- rake(data, targets)
 print(result)
 #> 
 #> ── Raking result (ipf) 
-#> Converged: Yes (1 iterations, max prop err = 7.11e-16)
+#> Converged: Yes (1 iterations, max prop err = 4.44e-16)
 #> Variables raked: "gender"
-#> Missing handling: "ignore"
+#> Missing handling: "exclude"
 #> Design effect: 1.085 | Effective n: 92 / 100
 #> Weight range: [0.781, 1.389] | Mean: 1 | SD: 0.292
 ```

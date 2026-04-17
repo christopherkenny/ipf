@@ -12,7 +12,7 @@ find_discrepant_vars(
   targets,
   weights,
   choosemethod = "total",
-  na_method = c("ignore", "bucket")
+  na_method = c("exclude", "bucket")
 )
 ```
 
@@ -38,8 +38,9 @@ find_discrepant_vars(
 
 - na_method:
 
-  How to handle `NA` values. `"ignore"` excludes them from that margin.
-  `"bucket"` treats missing values as an implicit extra category.
+  How to handle `NA` values. `"exclude"` skips NA cases from that
+  margin. `"bucket"` treats missing values as an implicit extra
+  category.
 
 ## Value
 

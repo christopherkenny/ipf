@@ -36,5 +36,5 @@ glance(result)
 #> # A tibble: 1 × 7
 #>   converged iterations max_prop_err  deff n_eff n_obs n_vars
 #>   <lgl>          <int>        <dbl> <dbl> <dbl> <int>  <int>
-#> 1 TRUE               1     1.14e-15  1.00  99.8   100      1
+#> 1 TRUE               1     3.33e-16  1.00  99.8   100      1
 ```

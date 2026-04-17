@@ -37,10 +37,10 @@ summary(result)
 #> 
 #> ── Raking Summary (ipf) 
 #> ────────────────────────────────────────────────────────────────────────────────
-#> ✔ Converged in 1 iterations (max prop err = 7.11e-16)
+#> ✔ Converged in 1 iterations (max prop err = 4.44e-16)
 #> ℹ No base weights (uniform)
 #> ℹ Selection: type = "nolim", method = "total"
-#> ℹ Missing handling: "ignore"
+#> ℹ Missing handling: "exclude"
 #> ℹ Variables raked: "gender"
 #> ── Weight Summary ──────────────────────────────────────────────────────────────
 #> Min: 0.8333 Q1: 0.8333 Median: 0.8333 Mean: 1 Q3: 1.25 Max: 1.25

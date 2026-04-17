@@ -8,7 +8,8 @@
 <title>Getting Started with ipf • ipf</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Fira_Sans-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting Started with ipf">
 </head>
@@ -16,7 +17,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">ipf</a>
 
@@ -154,11 +155,11 @@ automatically with a warning.</p>
 <span><span class="va">result</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking result (ipf)</span></span>
-<span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (695 iterations, max prop err = 9.83e-07)</span></span>
+<span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (5 iterations, max prop err = 3.04e-07)</span></span>
 <span><span class="co">#&gt; Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
-<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
-<span><span class="co">#&gt; Design effect: 1.176 | Effective n: 822 / 966</span></span>
-<span><span class="co">#&gt; Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424</span></span></code></pre></div>
+<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"exclude"</span></span></span>
+<span><span class="co">#&gt; Design effect: 1.113 | Effective n: 868 / 966</span></span>
+<span><span class="co">#&gt; Weight range: [0.199, 1.928] | Mean: 1 | SD: 0.337</span></span></code></pre></div>
 <p><code>result</code> is an <code>ipf_rake</code> object containing the
 weights and diagnostics.</p>
 <p>If you want missing values in a raking variable to act like their own
@@ -183,11 +184,11 @@ implicit category, use <code>na_method = 'bucket'</code>:</p>
 <span><span class="va">base_weighted</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking result (ipf)</span></span>
-<span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (696 iterations, max prop err = 9.87e-07)</span></span>
+<span><span class="co">#&gt; Converged: <span style="color: #00BB00;">Yes</span> (5 iterations, max prop err = 3.04e-07)</span></span>
 <span><span class="co">#&gt; Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
-<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
-<span><span class="co">#&gt; Design effect: 1.176 | Effective n: 822 / 966</span></span>
-<span><span class="co">#&gt; Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424</span></span></code></pre></div>
+<span><span class="co">#&gt; Missing handling: <span style="color: #0000BB;">"exclude"</span></span></span>
+<span><span class="co">#&gt; Design effect: 1.113 | Effective n: 868 / 966</span></span>
+<span><span class="co">#&gt; Weight range: [0.199, 1.928] | Mean: 1 | SD: 0.337</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="inspect-results">Inspect results<a class="anchor" aria-label="anchor" href="#inspect-results"></a>
@@ -201,10 +202,10 @@ less effective data.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $deff</span></span>
-<span><span class="co">#&gt; [1] 1.175752</span></span>
+<span><span class="co">#&gt; [1] 1.113407</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n_eff</span></span>
-<span><span class="co">#&gt; [1] 821.602</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 867.6076</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="per-variable-diagnostics">Per-variable diagnostics<a class="anchor" aria-label="anchor" href="#per-variable-diagnostics"></a>
@@ -215,47 +216,47 @@ less effective data.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Raking Summary (ipf)</span></span>
 <span><span class="co">#&gt; ────────────────────────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Converged in 695 iterations (max prop err = 9.83e-07)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Converged in 5 iterations (max prop err = 3.04e-07)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> No base weights (uniform)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Selection: type = <span style="color: #0000BB;">"nolim"</span>, method = <span style="color: #0000BB;">"total"</span></span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Missing handling: <span style="color: #0000BB;">"ignore"</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Missing handling: <span style="color: #0000BB;">"exclude"</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Variables raked: <span style="color: #0000BB;">"sex"</span>, <span style="color: #0000BB;">"race"</span>, and <span style="color: #0000BB;">"income"</span></span></span>
 <span><span class="co">#&gt; ── Weight Summary ──────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; Min: 0.0505 Q1: 0.6768 Median: 1.0292 Mean: 1.0104 Q3: 1.3194 Max: 3.793</span></span>
-<span><span class="co">#&gt; SD: 0.4236 CV: 0.4192</span></span>
+<span><span class="co">#&gt; Min: 0.1993 Q1: 0.6688 Median: 0.9703 Mean: 1 Q3: 1.2794 Max: 1.9275</span></span>
+<span><span class="co">#&gt; SD: 0.3368 CV: 0.3368</span></span>
 <span><span class="co">#&gt; ── Design Effect ───────────────────────────────────────────────────────────────</span></span>
-<span><span class="co">#&gt; Deff: 1.1758 | Effective n: 822 / 966</span></span>
+<span><span class="co">#&gt; Deff: 1.1134 | Effective n: 868 / 966</span></span>
 <span><span class="co">#&gt; ── Per-Variable Assessment ─────────────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── sex</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 9</span></span></span>
 <span><span class="co">#&gt;   level  target unweighted_n unweighted_pct weighted_n weighted_pct change_pct</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Male    0.472          458          0.477       456.        0.472   -<span style="color: #BB0000;">0.004</span><span style="color: #BB0000; text-decoration: underline;">59</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Female  0.528          503          0.523       510.        0.528    0.004<span style="text-decoration: underline;">59</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Total   1              961          1           966.        1.000    0.009<span style="text-decoration: underline;">17</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Male    0.472          458          0.477       454.        0.472   -<span style="color: #BB0000;">0.004</span><span style="color: #BB0000; text-decoration: underline;">59</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Female  0.528          503          0.523       508.        0.528    0.004<span style="text-decoration: underline;">59</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Total   1              961          1           962.        1.00     0.009<span style="text-decoration: underline;">17</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: residual_disc &lt;dbl&gt;, original_disc &lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── race</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 9</span></span></span>
 <span><span class="co">#&gt;   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> White     0.706          632         0.662       682.        0.706     0.044<span style="text-decoration: underline;">2</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Black     0.121          118         0.124       117.        0.121    -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">56</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Hispanic  0.107          114         0.119       103.        0.107    -<span style="color: #BB0000;">0.012</span><span style="color: #BB0000; text-decoration: underline;">4</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Asian     0.047           28         0.029<span style="text-decoration: underline;">3</span>       45.4       0.047<span style="text-decoration: underline;">0</span>    0.017<span style="text-decoration: underline;">7</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Other     0.019           63         0.066<span style="text-decoration: underline;">0</span>       18.4       0.019<span style="text-decoration: underline;">0</span>   -<span style="color: #BB0000;">0.047</span><span style="color: #BB0000; text-decoration: underline;">0</span> </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Total     1              955         1           966.        1.000     0.124  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> White     0.706          632         0.662       674.        0.706     0.044<span style="text-decoration: underline;">2</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Black     0.121          118         0.124       116.        0.121    -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">56</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Hispanic  0.107          114         0.119       102.        0.107    -<span style="color: #BB0000;">0.012</span><span style="color: #BB0000; text-decoration: underline;">4</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Asian     0.047           28         0.029<span style="text-decoration: underline;">3</span>       44.9       0.047<span style="text-decoration: underline;">0</span>    0.017<span style="text-decoration: underline;">7</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Other     0.019           63         0.066<span style="text-decoration: underline;">0</span>       18.1       0.019<span style="text-decoration: underline;">0</span>   -<span style="color: #BB0000;">0.047</span><span style="color: #BB0000; text-decoration: underline;">0</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Total     1              955         1           955.        1.00      0.124  </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: residual_disc &lt;dbl&gt;, original_disc &lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── income</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 9</span></span></span>
 <span><span class="co">#&gt;   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Under $…  0.151          230          0.250       146.        0.151    -<span style="color: #BB0000;">0.099</span><span style="color: #BB0000; text-decoration: underline;">3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> $50k-$1…  0.294          300          0.326       284.        0.294    -<span style="color: #BB0000;">0.032</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Over $1…  0.555          389          0.423       536.        0.555     0.132 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Total     1              919          1           966.        1.000     0.263 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Under $…  0.151          230          0.250       139.        0.151    -<span style="color: #BB0000;">0.099</span><span style="color: #BB0000; text-decoration: underline;">3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> $50k-$1…  0.294          300          0.326       270.        0.294    -<span style="color: #BB0000;">0.032</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Over $1…  0.555          389          0.423       509.        0.555     0.132 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Total     1              919          1           917.        1.00      0.263 </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: residual_disc &lt;dbl&gt;, original_disc &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>The <strong>residual discrepancy</strong> column shows how close the
 weighted distribution is to the target.</p>
@@ -271,23 +272,23 @@ weighted distribution is to the target.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 5</span></span></span>
 <span><span class="co">#&gt;    variable level      target weighted_pct discrepancy</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> sex      Male        0.472       0.472    -<span style="color: #BB0000;">2.22</span><span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> sex      Female      0.528       0.528     2.22<span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> race     White       0.706       0.706     5.71<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> race     Black       0.121       0.121     1.61<span style="color: #949494;">e</span><span style="color: #BB0000;">-12</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> race     Hispanic    0.107       0.107    -<span style="color: #BB0000;">5.71</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> race     Asian       0.047       0.047<span style="text-decoration: underline;">0</span>   -<span style="color: #BB0000;">1.22</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> race     Other       0.019       0.019<span style="text-decoration: underline;">0</span>    1.20<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> income   Under $50k  0.151       0.151     7.22<span style="color: #949494;">e</span><span style="color: #BB0000;">-16</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> income   $50k-$100k  0.294       0.294     1.72<span style="color: #949494;">e</span><span style="color: #BB0000;">-15</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> income   Over $100k  0.555       0.555    -<span style="color: #BB0000;">6.66</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> sex      Male        0.472       0.472     1.43<span style="color: #949494;">e</span><span style="color: #BB0000;">- 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> sex      Female      0.528       0.528    -<span style="color: #BB0000;">1.43</span><span style="color: #949494;">e</span><span style="color: #BB0000;">- 7</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> race     White       0.706       0.706    -<span style="color: #BB0000;">3.36</span><span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> race     Black       0.121       0.121     6.71<span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> race     Hispanic    0.107       0.107    -<span style="color: #BB0000;">2.10</span><span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> race     Asian       0.047       0.047<span style="text-decoration: underline;">0</span>   -<span style="color: #BB0000;">1.69</span><span style="color: #949494;">e</span><span style="color: #BB0000;">- 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> race     Other       0.019       0.019<span style="text-decoration: underline;">0</span>    4.44<span style="color: #949494;">e</span><span style="color: #BB0000;">-10</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> income   Under $50k  0.151       0.151     3.05<span style="color: #949494;">e</span><span style="color: #BB0000;">-16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> income   $50k-$100k  0.294       0.294     1.11<span style="color: #949494;">e</span><span style="color: #BB0000;">-16</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> income   Over $100k  0.555       0.555    -<span style="color: #BB0000;">2.55</span><span style="color: #949494;">e</span><span style="color: #BB0000;">-15</span></span></span>
 <span></span>
 <span><span class="co"># One-row summary</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;   converged iterations max_prop_err  deff n_eff n_obs n_vars</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> TRUE             695  0.000<span style="text-decoration: underline;">000</span>983  1.18  822.   966      3</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> TRUE               5  0.000<span style="text-decoration: underline;">000</span>304  1.11  868.   966      3</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="augmenting-the-data">Augmenting the data<a class="anchor" aria-label="anchor" href="#augmenting-the-data"></a>
@@ -300,12 +301,12 @@ data:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 8</span></span></span>
 <span><span class="co">#&gt;   state sex    race  income     education    married  presidential .weight</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> CO    Female White Over $100k <span style="color: #BB0000;">NA</span>           Divorced Trump          1.45 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> CA    Male   White Over $100k <span style="color: #BB0000;">NA</span>           Married  Harris         1.32 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NC    Female White <span style="color: #BB0000;">NA</span>         Bachelor's   Married  Harris         0.172</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> MA    Male   <span style="color: #BB0000;">NA</span>    Over $100k Some college Married  Trump          1.45 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> WA    Female Black <span style="color: #BB0000;">NA</span>         Bachelor's   Married  <span style="color: #BB0000;">NA</span>             0.183</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> GA    Male   White $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Trump          0.935</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> CO    Female White Over $100k <span style="color: #BB0000;">NA</span>           Divorced Trump          1.37 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> CA    Male   White Over $100k <span style="color: #BB0000;">NA</span>           Married  Harris         1.28 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> NC    Female White <span style="color: #BB0000;">NA</span>         Bachelor's   Married  Harris         1.07 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> MA    Male   <span style="color: #BB0000;">NA</span>    Over $100k Some college Married  Trump          1.23 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> WA    Female Black <span style="color: #BB0000;">NA</span>         Bachelor's   Married  <span style="color: #BB0000;">NA</span>             1.12 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> GA    Male   White $50k-$100k <span style="color: #BB0000;">NA</span>           <span style="color: #BB0000;">NA</span>       Trump          0.908</span></span></code></pre></div>
 <p>The <code>.weight</code> column can then be used in downstream
 analyses.</p>
 <p>For example, you can compare an estimate before and after
@@ -335,8 +336,8 @@ weighting:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   presidential unweighted_pct weighted_pct</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Harris                0.564        0.577</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Trump                 0.436        0.423</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Harris                0.564        0.575</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Trump                 0.436        0.425</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -350,40 +351,40 @@ weights but can leave more residual mismatch.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Unbounded fit from above</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.05047476 3.79304942</span></span>
+<span><span class="co">#&gt; [1] 0.1993456 1.9275117</span></span>
 <span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $deff</span></span>
-<span><span class="co">#&gt; [1] 1.175752</span></span>
+<span><span class="co">#&gt; [1] 1.113407</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n_eff</span></span>
-<span><span class="co">#&gt; [1] 821.602</span></span>
+<span><span class="co">#&gt; [1] 867.6076</span></span>
 <span></span>
 <span><span class="co"># Default cap</span></span>
 <span><span class="va">default_bounded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">default_bounded</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.05047476 3.79304942</span></span>
+<span><span class="co">#&gt; [1] 0.1993456 1.9275117</span></span>
 <span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">default_bounded</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $deff</span></span>
-<span><span class="co">#&gt; [1] 1.175752</span></span>
+<span><span class="co">#&gt; [1] 1.113407</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n_eff</span></span>
-<span><span class="co">#&gt; [1] 821.602</span></span>
+<span><span class="co">#&gt; [1] 867.6076</span></span>
 <span></span>
 <span><span class="co"># Tighter cap</span></span>
 <span><span class="va">tight</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets</span>, cap <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">tight</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.04148087 2.99609812</span></span>
+<span><span class="co">#&gt; [1] 0.1993456 1.9275117</span></span>
 <span><span class="fu"><a href="../reference/design_effect.html">design_effect</a></span><span class="op">(</span><span class="va">tight</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $deff</span></span>
-<span><span class="co">#&gt; [1] 1.172102</span></span>
+<span><span class="co">#&gt; [1] 1.113407</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $n_eff</span></span>
-<span><span class="co">#&gt; [1] 824.1607</span></span>
+<span><span class="co">#&gt; [1] 867.6076</span></span>
 <span></span>
 <span><span class="co"># Or specify both min and max bounds</span></span>
 <span><span class="va">bounded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rake.html">rake</a></span><span class="op">(</span><span class="va">anes24</span>, <span class="va">targets</span>, bounds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">bounded</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.300000 2.101607</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.300000 1.950523</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="variable-selection">Variable selection<a class="anchor" aria-label="anchor" href="#variable-selection"></a>

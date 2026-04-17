@@ -18,7 +18,7 @@ rake(
   nlim = 5L,
   choosemethod = c("total", "max", "average", "totalsquared", "maxsquared",
     "averagesquared"),
-  na_method = c("ignore", "bucket"),
+  na_method = c("exclude", "bucket"),
   iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-06,
@@ -84,11 +84,11 @@ rake(
 
 - na_method:
 
-  How to handle `NA` values in raking variables. `"ignore"` excludes
-  missing cases from that variable's margin update. `"bucket"` treats
-  missing values as an implicit extra category whose total weight is
-  preserved while the named targets are rescaled to the remaining
-  nonmissing weight mass.
+  How to handle `NA` values in raking variables. `"exclude"` (default):
+  targets are proportions among non-NA cases only; NA cases are
+  invisible to that margin. Matches anesrake. `"bucket"`: NAs become a
+  frozen extra category; their total weight is preserved and the named
+  targets are rescaled to the remaining non-NA mass.
 
 - iterate:
 
@@ -156,7 +156,7 @@ print(result)
 #> ── Raking result (ipf) 
 #> Converged: Yes (2 iterations, max prop err = 3.13e-08)
 #> Variables raked: "gender" and "age"
-#> Missing handling: "ignore"
+#> Missing handling: "exclude"
 #> Design effect: 1.074 | Effective n: 93 / 100
 #> Weight range: [0.735, 1.55] | Mean: 1 | SD: 0.272
 ```

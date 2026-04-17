@@ -11,7 +11,7 @@ weight_assess(
   targets,
   weights,
   base_weights = NULL,
-  na_method = c("ignore", "bucket")
+  na_method = c("exclude", "bucket")
 )
 ```
 
@@ -35,8 +35,9 @@ weight_assess(
 
 - na_method:
 
-  How to handle `NA` values. `"ignore"` excludes them from that margin.
-  `"bucket"` treats missing values as an implicit extra category.
+  How to handle `NA` values. `"exclude"` skips NA cases from that
+  margin. `"bucket"` treats missing values as an implicit extra
+  category.
 
 ## Value
 

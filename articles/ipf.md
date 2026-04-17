@@ -105,11 +105,11 @@ result <- rake(anes24, targets, cap = NULL)
 result
 #> 
 #> ── Raking result (ipf)
-#> Converged: Yes (695 iterations, max prop err = 9.83e-07)
+#> Converged: Yes (5 iterations, max prop err = 3.04e-07)
 #> Variables raked: "sex", "race", and "income"
-#> Missing handling: "ignore"
-#> Design effect: 1.176 | Effective n: 822 / 966
-#> Weight range: [0.05, 3.793] | Mean: 1.01 | SD: 0.424
+#> Missing handling: "exclude"
+#> Design effect: 1.113 | Effective n: 868 / 966
+#> Weight range: [0.199, 1.928] | Mean: 1 | SD: 0.337
 ```
 
 `result` is an `ipf_rake` object containing the weights and diagnostics.
@@ -139,11 +139,11 @@ base_weighted <- rake(anes24, targets, base_weights = base_w, cap = NULL)
 base_weighted
 #> 
 #> ── Raking result (ipf)
-#> Converged: Yes (696 iterations, max prop err = 9.87e-07)
+#> Converged: Yes (5 iterations, max prop err = 3.04e-07)
 #> Variables raked: "sex", "race", and "income"
-#> Missing handling: "ignore"
-#> Design effect: 1.176 | Effective n: 822 / 966
-#> Weight range: [0.05, 3.788] | Mean: 1.01 | SD: 0.424
+#> Missing handling: "exclude"
+#> Design effect: 1.113 | Effective n: 868 / 966
+#> Weight range: [0.199, 1.928] | Mean: 1 | SD: 0.337
 ```
 
 ## Inspect results
@@ -157,10 +157,10 @@ less effective data.
 ``` r
 design_effect(result$weights)
 #> $deff
-#> [1] 1.175752
+#> [1] 1.113407
 #> 
 #> $n_eff
-#> [1] 821.602
+#> [1] 867.6076
 ```
 
 ### Per-variable diagnostics
@@ -173,47 +173,47 @@ summary(result)
 #> 
 #> ── Raking Summary (ipf)
 #> ────────────────────────────────────────────────────────────────────────────────
-#> ✔ Converged in 695 iterations (max prop err = 9.83e-07)
+#> ✔ Converged in 5 iterations (max prop err = 3.04e-07)
 #> ℹ No base weights (uniform)
 #> ℹ Selection: type = "nolim", method = "total"
-#> ℹ Missing handling: "ignore"
+#> ℹ Missing handling: "exclude"
 #> ℹ Variables raked: "sex", "race", and "income"
 #> ── Weight Summary ──────────────────────────────────────────────────────────────
-#> Min: 0.0505 Q1: 0.6768 Median: 1.0292 Mean: 1.0104 Q3: 1.3194 Max: 3.793
-#> SD: 0.4236 CV: 0.4192
+#> Min: 0.1993 Q1: 0.6688 Median: 0.9703 Mean: 1 Q3: 1.2794 Max: 1.9275
+#> SD: 0.3368 CV: 0.3368
 #> ── Design Effect ───────────────────────────────────────────────────────────────
-#> Deff: 1.1758 | Effective n: 822 / 966
+#> Deff: 1.1134 | Effective n: 868 / 966
 #> ── Per-Variable Assessment ─────────────────────────────────────────────────────
 #> 
 #> ── sex
 #> # A tibble: 3 × 9
 #>   level  target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
 #>   <chr>   <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
-#> 1 Male    0.472          458          0.477       456.        0.472   -0.00459
-#> 2 Female  0.528          503          0.523       510.        0.528    0.00459
-#> 3 Total   1              961          1           966.        1.000    0.00917
+#> 1 Male    0.472          458          0.477       454.        0.472   -0.00459
+#> 2 Female  0.528          503          0.523       508.        0.528    0.00459
+#> 3 Total   1              961          1           962.        1.00     0.00917
 #> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
 #> 
 #> ── race
 #> # A tibble: 6 × 9
 #>   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
 #>   <chr>     <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
-#> 1 White     0.706          632         0.662       682.        0.706     0.0442 
-#> 2 Black     0.121          118         0.124       117.        0.121    -0.00256
-#> 3 Hispanic  0.107          114         0.119       103.        0.107    -0.0124 
-#> 4 Asian     0.047           28         0.0293       45.4       0.0470    0.0177 
-#> 5 Other     0.019           63         0.0660       18.4       0.0190   -0.0470 
-#> 6 Total     1              955         1           966.        1.000     0.124  
+#> 1 White     0.706          632         0.662       674.        0.706     0.0442 
+#> 2 Black     0.121          118         0.124       116.        0.121    -0.00256
+#> 3 Hispanic  0.107          114         0.119       102.        0.107    -0.0124 
+#> 4 Asian     0.047           28         0.0293       44.9       0.0470    0.0177 
+#> 5 Other     0.019           63         0.0660       18.1       0.0190   -0.0470 
+#> 6 Total     1              955         1           955.        1.00      0.124  
 #> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
 #> 
 #> ── income
 #> # A tibble: 4 × 9
 #>   level    target unweighted_n unweighted_pct weighted_n weighted_pct change_pct
 #>   <chr>     <dbl>        <dbl>          <dbl>      <dbl>        <dbl>      <dbl>
-#> 1 Under $…  0.151          230          0.250       146.        0.151    -0.0993
-#> 2 $50k-$1…  0.294          300          0.326       284.        0.294    -0.0324
-#> 3 Over $1…  0.555          389          0.423       536.        0.555     0.132 
-#> 4 Total     1              919          1           966.        1.000     0.263 
+#> 1 Under $…  0.151          230          0.250       139.        0.151    -0.0993
+#> 2 $50k-$1…  0.294          300          0.326       270.        0.294    -0.0324
+#> 3 Over $1…  0.555          389          0.423       509.        0.555     0.132 
+#> 4 Total     1              919          1           917.        1.00      0.263 
 #> # ℹ 2 more variables: residual_disc <dbl>, original_disc <dbl>
 ```
 
@@ -230,23 +230,23 @@ tidy(result)
 #> # A tibble: 10 × 5
 #>    variable level      target weighted_pct discrepancy
 #>    <chr>    <chr>       <dbl>        <dbl>       <dbl>
-#>  1 sex      Male        0.472       0.472    -2.22e- 9
-#>  2 sex      Female      0.528       0.528     2.22e- 9
-#>  3 race     White       0.706       0.706     5.71e-10
-#>  4 race     Black       0.121       0.121     1.61e-12
-#>  5 race     Hispanic    0.107       0.107    -5.71e-10
-#>  6 race     Asian       0.047       0.0470   -1.22e-10
-#>  7 race     Other       0.019       0.0190    1.20e-10
-#>  8 income   Under $50k  0.151       0.151     7.22e-16
-#>  9 income   $50k-$100k  0.294       0.294     1.72e-15
-#> 10 income   Over $100k  0.555       0.555    -6.66e-16
+#>  1 sex      Male        0.472       0.472     1.43e- 7
+#>  2 sex      Female      0.528       0.528    -1.43e- 7
+#>  3 race     White       0.706       0.706    -3.36e- 9
+#>  4 race     Black       0.121       0.121     6.71e- 9
+#>  5 race     Hispanic    0.107       0.107    -2.10e- 9
+#>  6 race     Asian       0.047       0.0470   -1.69e- 9
+#>  7 race     Other       0.019       0.0190    4.44e-10
+#>  8 income   Under $50k  0.151       0.151     3.05e-16
+#>  9 income   $50k-$100k  0.294       0.294     1.11e-16
+#> 10 income   Over $100k  0.555       0.555    -2.55e-15
 
 # One-row summary
 glance(result)
 #> # A tibble: 1 × 7
 #>   converged iterations max_prop_err  deff n_eff n_obs n_vars
 #>   <lgl>          <int>        <dbl> <dbl> <dbl> <int>  <int>
-#> 1 TRUE             695  0.000000983  1.18  822.   966      3
+#> 1 TRUE               5  0.000000304  1.11  868.   966      3
 ```
 
 ### Augmenting the data
@@ -259,12 +259,12 @@ head(weighted_data)
 #> # A tibble: 6 × 8
 #>   state sex    race  income     education    married  presidential .weight
 #>   <chr> <chr>  <chr> <chr>      <chr>        <chr>    <chr>          <dbl>
-#> 1 CO    Female White Over $100k NA           Divorced Trump          1.45 
-#> 2 CA    Male   White Over $100k NA           Married  Harris         1.32 
-#> 3 NC    Female White NA         Bachelor's   Married  Harris         0.172
-#> 4 MA    Male   NA    Over $100k Some college Married  Trump          1.45 
-#> 5 WA    Female Black NA         Bachelor's   Married  NA             0.183
-#> 6 GA    Male   White $50k-$100k NA           NA       Trump          0.935
+#> 1 CO    Female White Over $100k NA           Divorced Trump          1.37 
+#> 2 CA    Male   White Over $100k NA           Married  Harris         1.28 
+#> 3 NC    Female White NA         Bachelor's   Married  Harris         1.07 
+#> 4 MA    Male   NA    Over $100k Some college Married  Trump          1.23 
+#> 5 WA    Female Black NA         Bachelor's   Married  NA             1.12 
+#> 6 GA    Male   White $50k-$100k NA           NA       Trump          0.908
 ```
 
 The `.weight` column can then be used in downstream analyses.
@@ -296,8 +296,8 @@ presidential_compare
 #> # A tibble: 2 × 3
 #>   presidential unweighted_pct weighted_pct
 #>   <chr>                 <dbl>        <dbl>
-#> 1 Harris                0.564        0.577
-#> 2 Trump                 0.436        0.423
+#> 1 Harris                0.564        0.575
+#> 2 Trump                 0.436        0.425
 ```
 
 ## Advanced options
@@ -310,40 +310,40 @@ weights but can leave more residual mismatch.
 ``` r
 # Unbounded fit from above
 range(result$weights)
-#> [1] 0.05047476 3.79304942
+#> [1] 0.1993456 1.9275117
 design_effect(result$weights)
 #> $deff
-#> [1] 1.175752
+#> [1] 1.113407
 #> 
 #> $n_eff
-#> [1] 821.602
+#> [1] 867.6076
 
 # Default cap
 default_bounded <- rake(anes24, targets)
 range(default_bounded$weights)
-#> [1] 0.05047476 3.79304942
+#> [1] 0.1993456 1.9275117
 design_effect(default_bounded$weights)
 #> $deff
-#> [1] 1.175752
+#> [1] 1.113407
 #> 
 #> $n_eff
-#> [1] 821.602
+#> [1] 867.6076
 
 # Tighter cap
 tight <- rake(anes24, targets, cap = 3)
 range(tight$weights)
-#> [1] 0.04148087 2.99609812
+#> [1] 0.1993456 1.9275117
 design_effect(tight$weights)
 #> $deff
-#> [1] 1.172102
+#> [1] 1.113407
 #> 
 #> $n_eff
-#> [1] 824.1607
+#> [1] 867.6076
 
 # Or specify both min and max bounds
 bounded <- rake(anes24, targets, bounds = c(0.3, 3))
 range(bounded$weights)
-#> [1] 0.300000 2.101607
+#> [1] 0.300000 1.950523
 ```
 
 ### Variable selection
