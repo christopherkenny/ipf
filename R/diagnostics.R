@@ -28,7 +28,7 @@ design_effect <- function(weights) {
 #' @param base_weights Original base weights before raking.
 #'   If `NULL`, uses uniform weights.
 #' @param na_method How to handle `NA` values.
-#'   `"ignore"` excludes them from that margin.
+#'   `"exclude"` skips NA cases from that margin.
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named list of tibbles, one per variable.
@@ -46,7 +46,7 @@ weight_assess <- function(
   targets,
   weights,
   base_weights = NULL,
-  na_method = c('ignore', 'bucket')
+  na_method = c('exclude', 'bucket')
 ) {
   na_method <- match.arg(na_method)
 

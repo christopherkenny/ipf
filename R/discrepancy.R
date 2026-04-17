@@ -6,7 +6,7 @@
 #' @param var_name Single variable name to compute discrepancy for.
 #'   If `NULL`, computes for all variables in `targets`.
 #' @param na_method How to handle `NA` values.
-#'   `"ignore"` excludes them from that margin.
+#'   `"exclude"` skips NA cases from that margin.
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named list with `weighted_pct` and `discrepancy` vectors per variable.
@@ -17,7 +17,7 @@ compute_discrepancy <- function(
   targets,
   weights,
   var_name = NULL,
-  na_method = c('ignore', 'bucket')
+  na_method = c('exclude', 'bucket')
 ) {
   na_method <- match.arg(na_method)
   vars <- if (is.null(var_name)) names(targets) else var_name
@@ -58,7 +58,7 @@ compute_discrepancy <- function(
 #' @param choosemethod Method for aggregating per-category discrepancies.
 #'   One of `"total"`, `"max"`, `"average"`, `"totalsquared"`, `"maxsquared"`, `"averagesquared"`.
 #' @param na_method How to handle `NA` values.
-#'   `"ignore"` excludes them from that margin.
+#'   `"exclude"` skips NA cases from that margin.
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return Named numeric vector of aggregate discrepancy per variable.
@@ -79,7 +79,7 @@ find_discrepant_vars <- function(
   targets,
   weights,
   choosemethod = 'total',
-  na_method = c('ignore', 'bucket')
+  na_method = c('exclude', 'bucket')
 ) {
   valid_methods <- c(
     'total',

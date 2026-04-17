@@ -15,7 +15,7 @@ rake(
   nlim = 5L,
   choosemethod = c("total", "max", "average", "totalsquared", "maxsquared",
     "averagesquared"),
-  na_method = c("ignore", "bucket"),
+  na_method = c("exclude", "bucket"),
   iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-06,
@@ -60,10 +60,10 @@ Default \code{5}.}
 One of \code{"total"}, \code{"max"}, \code{"average"}, \code{"totalsquared"}, \code{"maxsquared"}, \code{"averagesquared"}.}
 
 \item{na_method}{How to handle \code{NA} values in raking variables.
-\code{"ignore"} excludes missing cases from that variable's margin update.
-\code{"bucket"} treats missing values as an implicit extra category whose total
-weight is preserved while the named targets are rescaled to the remaining
-nonmissing weight mass.}
+\code{"exclude"} (default): targets are proportions among non-NA cases only; NA cases are
+invisible to that margin. Matches anesrake.
+\code{"bucket"}: NAs become a frozen extra category; their total weight is preserved and the
+named targets are rescaled to the remaining non-NA mass.}
 
 \item{iterate}{Logical.
 If \code{TRUE} and \code{type = "pctlim"}, re-check discrepancies after raking and add newly discrepant variables, repeating up to 10 times.

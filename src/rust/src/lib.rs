@@ -19,10 +19,14 @@ fn kahan_sum(values: &[f64]) -> f64 {
 }
 
 /// One margin encoded with integer levels (0 = ignore/NA) and target totals.
+/// When `proportional = true`, `targets` holds proportions (0..1) and the
+/// engine scales relative to the current non-NA weight total each sweep,
+/// matching anesrake-style NA handling.
 #[derive(Clone)]
 struct Margin {
     levels: Vec<usize>,
     targets: Vec<f64>,
+    proportional: bool,
 }
 
 fn list_get(list: &List, name: &str) -> Option<Robj> {
@@ -66,7 +70,13 @@ fn parse_margins(margins: List) -> Result<Vec<Margin>> {
             .map(|x| if x.is_na() { 0.0 } else { x.inner() })
             .collect();
 
-        out.push(Margin { levels, targets });
+        // Optional proportional flag (defaults to false = existing total-based behaviour)
+        let proportional = list_get(&mlist, "proportional")
+            .and_then(|r| TryInto::<Logicals>::try_into(r).ok())
+            .and_then(|lv| lv.iter().next().map(|b| b.is_true()))
+            .unwrap_or(false);
+
+        out.push(Margin { levels, targets, proportional });
     }
     Ok(out)
 }
@@ -82,6 +92,19 @@ fn group_sums(m: &Margin, w: &[f64], sums: &mut [f64]) {
         if code > 0 && code <= lcount {
             sums[code - 1] += w[i];
         }
+    }
+}
+
+/// Compute proportional error for one margin level, respecting mode.
+/// For proportional margins: error = |current_pct - target_pct| / target_pct
+/// For total margins:        error = |current - target| / target
+#[inline]
+fn prop_err(cur: f64, tgt: f64, non_na_total: f64, proportional: bool) -> f64 {
+    if proportional {
+        let cur_pct = if non_na_total > 0.0 { cur / non_na_total } else { 0.0 };
+        if tgt > 0.0 { (cur_pct - tgt).abs() / tgt } else { cur_pct.abs() }
+    } else {
+        if tgt > 0.0 { (cur - tgt).abs() / tgt } else { cur.abs() }
     }
 }
 
@@ -103,19 +126,27 @@ fn record_diag_snapshot(
             continue;
         }
         group_sums(m, w, sums);
+        let non_na_total: f64 = if m.proportional {
+            sums[..lcount].iter().sum()
+        } else {
+            0.0
+        };
         for li in 0..lcount {
             let tgt = m.targets[li];
             let cur = sums[li];
-            let err = if tgt > 0.0 {
-                (cur - tgt).abs() / tgt
+            // Report current as proportion when in proportional mode so diagnostics
+            // are on the same scale as the target.
+            let reported_cur = if m.proportional && non_na_total > 0.0 {
+                cur / non_na_total
             } else {
-                cur.abs()
+                cur
             };
+            let err = prop_err(cur, tgt, non_na_total, m.proportional);
             diag_iter.push(iter_idx as f64);
             diag_margin.push((mi + 1) as f64);
             diag_level.push((li + 1) as f64);
             diag_target.push(tgt);
-            diag_current.push(cur);
+            diag_current.push(reported_cur);
             diag_err.push(err);
         }
     }
@@ -128,7 +159,10 @@ fn record_diag_snapshot(
 /// Raking / iterative proportional fitting core.
 ///
 /// @param weights Numeric vector (length n) of initial weights.
-/// @param margins R list of margins, each with `$levels` (integer) and `$targets` (numeric).
+/// @param margins R list of margins, each with `$levels` (integer), `$targets` (numeric),
+///   and optionally `$proportional` (logical, default FALSE).
+///   When `proportional = TRUE` the targets are proportions (sum to 1 among non-NA
+///   categories) and scaling is done relative to the current non-NA total each sweep.
 /// @param max_iter Maximum number of full sweeps.
 /// @param tol Convergence tolerance on max proportional error.
 /// @param bounds NULL or numeric(2) c(lo, hi) for weight bounding.
@@ -219,13 +253,28 @@ fn rake_ipf_rust(
                 continue;
             }
             group_sums(m, &w, &mut sums);
-            for li in 0..lcount {
-                factors[li] = if sums[li] > 0.0 {
-                    m.targets[li] / sums[li]
-                } else {
-                    1.0
-                };
+
+            if m.proportional {
+                // anesrake-style: scale relative to current non-NA total
+                let non_na_total: f64 = sums[..lcount].iter().sum();
+                for li in 0..lcount {
+                    factors[li] = if sums[li] > 0.0 && non_na_total > 0.0 {
+                        m.targets[li] * non_na_total / sums[li]
+                    } else {
+                        1.0
+                    };
+                }
+            } else {
+                // Standard IPF: scale to fixed target totals
+                for li in 0..lcount {
+                    factors[li] = if sums[li] > 0.0 {
+                        m.targets[li] / sums[li]
+                    } else {
+                        1.0
+                    };
+                }
             }
+
             for i in 0..n {
                 let code = m.levels[i];
                 if code > 0 && code <= lcount {
@@ -287,14 +336,13 @@ fn rake_ipf_rust(
                 continue;
             }
             group_sums(m, &w, &mut sums);
+            let non_na_total: f64 = if m.proportional {
+                sums[..lcount].iter().sum()
+            } else {
+                0.0
+            };
             for li in 0..lcount {
-                let tgt = m.targets[li];
-                let cur = sums[li];
-                let err = if tgt > 0.0 {
-                    (cur - tgt).abs() / tgt
-                } else {
-                    cur.abs()
-                };
+                let err = prop_err(sums[li], m.targets[li], non_na_total, m.proportional);
                 if err > mpe {
                     mpe = err;
                 }

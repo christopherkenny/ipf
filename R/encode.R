@@ -1,13 +1,13 @@
 #' Encode a variable to integer codes for the Rust raking engine
 #'
 #' Converts factor, character, logical, or integer variables to 1-based integer codes.
-#' NAs either become 0 (ignored by the Rust core) or an explicit missing bucket.
+#' NAs either become 0 (skipped by the Rust core) or an explicit missing bucket.
 #'
 #' @param x A vector from the data frame.
 #' @param target_names Character vector of expected level names from the target.
 #' @param var_name Name of the variable (for error messages).
 #' @param na_method How to handle `NA` values.
-#'   `"ignore"` excludes them from that margin.
+#'   `"exclude"` skips them from that margin.
 #'   `"bucket"` treats missing values as an implicit extra category.
 #'
 #' @return A list with:
@@ -19,7 +19,7 @@ encode_variable <- function(
   x,
   target_names,
   var_name = 'variable',
-  na_method = c('ignore', 'bucket')
+  na_method = c('exclude', 'bucket')
 ) {
   na_method <- match.arg(na_method)
 
@@ -68,7 +68,7 @@ encode_variable <- function(
   }
 
   codes <- as.integer(x)
-  if (na_method == 'ignore') {
+  if (na_method == 'exclude') {
     codes[is.na(codes)] <- 0L
   }
 
@@ -83,7 +83,7 @@ build_margin_targets <- function(
   level_names,
   codes,
   weights,
-  na_method = c('ignore', 'bucket'),
+  na_method = c('exclude', 'bucket'),
   output = c('proportion', 'total')
 ) {
   na_method <- match.arg(na_method)

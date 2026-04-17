@@ -1,6 +1,7 @@
 url: http://christophertkenny.com/ipf/
 template:
   bootstrap: 5
+  package: ctktemplate
 
 navbar:
   structure:

@@ -9,7 +9,7 @@ weight_assess(
   targets,
   weights,
   base_weights = NULL,
-  na_method = c("ignore", "bucket")
+  na_method = c("exclude", "bucket")
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ weight_assess(
 If \code{NULL}, uses uniform weights.}
 
 \item{na_method}{How to handle \code{NA} values.
-\code{"ignore"} excludes them from that margin.
+\code{"exclude"} skips NA cases from that margin.
 \code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{

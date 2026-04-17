@@ -9,7 +9,7 @@ find_discrepant_vars(
   targets,
   weights,
   choosemethod = "total",
-  na_method = c("ignore", "bucket")
+  na_method = c("exclude", "bucket")
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ find_discrepant_vars(
 One of \code{"total"}, \code{"max"}, \code{"average"}, \code{"totalsquared"}, \code{"maxsquared"}, \code{"averagesquared"}.}
 
 \item{na_method}{How to handle \code{NA} values.
-\code{"ignore"} excludes them from that margin.
+\code{"exclude"} skips NA cases from that margin.
 \code{"bucket"} treats missing values as an implicit extra category.}
 }
 \value{

@@ -28,10 +28,10 @@
 #' @param choosemethod Method for aggregating per-category discrepancies into a single variable score.
 #'   One of `"total"`, `"max"`, `"average"`, `"totalsquared"`, `"maxsquared"`, `"averagesquared"`.
 #' @param na_method How to handle `NA` values in raking variables.
-#'   `"ignore"` excludes missing cases from that variable's margin update.
-#'   `"bucket"` treats missing values as an implicit extra category whose total
-#'   weight is preserved while the named targets are rescaled to the remaining
-#'   nonmissing weight mass.
+#'   `"exclude"` (default): targets are proportions among non-NA cases only; NA cases are
+#'   invisible to that margin. Matches anesrake.
+#'   `"bucket"`: NAs become a frozen extra category; their total weight is preserved and the
+#'   named targets are rescaled to the remaining non-NA mass.
 #' @param iterate Logical.
 #'   If `TRUE` and `type = "pctlim"`, re-check discrepancies after raking and add newly discrepant variables, repeating up to 10 times.
 #'   Default `TRUE`.
@@ -88,7 +88,7 @@ rake <- function(
     'maxsquared',
     'averagesquared'
   ),
-  na_method = c('ignore', 'bucket'),
+  na_method = c('exclude', 'bucket'),
   iterate = TRUE,
   max_iter = 1000L,
   tol = 1e-6,
@@ -297,7 +297,7 @@ encode_margins_for_rust <- function(
   data,
   targets,
   weights,
-  na_method = c('ignore', 'bucket')
+  na_method = c('exclude', 'bucket')
 ) {
   na_method <- match.arg(na_method)
 
@@ -310,19 +310,28 @@ encode_margins_for_rust <- function(
       na_method = na_method
     )
 
-    # Convert proportions to totals
-    tgt_totals <- build_margin_targets(
-      target = tgt,
-      level_names = enc$level_names,
-      codes = enc$codes,
-      weights = weights,
-      na_method = na_method,
-      output = 'total'
-    )
-
-    list(
-      levels = enc$codes,
-      targets = as.numeric(tgt_totals)
-    )
+    if (na_method == 'exclude') {
+      target_vec <- stats::setNames(numeric(length(enc$level_names)), enc$level_names)
+      target_vec[names(tgt)] <- as.numeric(tgt)
+      list(
+        levels = enc$codes,
+        targets = as.numeric(target_vec),
+        proportional = TRUE
+      )
+    } else {
+      tgt_totals <- build_margin_targets(
+        target = tgt,
+        level_names = enc$level_names,
+        codes = enc$codes,
+        weights = weights,
+        na_method = na_method,
+        output = 'total'
+      )
+      list(
+        levels = enc$codes,
+        targets = as.numeric(tgt_totals),
+        proportional = FALSE
+      )
+    }
   })
 }
