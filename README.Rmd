@@ -47,8 +47,7 @@ targets <- list(
     Black = 0.14,
     Hispanic = 0.19,
     Asian = 0.06,
-    "Native American" = 0.01,
-    Other = 0.01
+    Other = 0.02
   )
 )
 
