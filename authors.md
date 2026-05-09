@@ -7,12 +7,11 @@
 
 ## Citation
 
-Kenny C (2026). *ipf: Iterative Proportional Fitting (Raking) with a
-Rust Backend*. R package version 0.0.0.9000,
-<http://christophertkenny.com/ipf/>.
+Kenny C (2026). *ipf: Iterative Proportional Fitting*. R package version
+0.0.0.9000, <http://christophertkenny.com/ipf/>.
 
     @Manual{,
-      title = {ipf: Iterative Proportional Fitting (Raking) with a Rust Backend},
+      title = {ipf: Iterative Proportional Fitting},
       author = {Christopher T. Kenny},
       year = {2026},
       note = {R package version 0.0.0.9000},

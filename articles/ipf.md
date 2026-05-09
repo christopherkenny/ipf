@@ -16,6 +16,7 @@ National Election Study
 ## Setup
 
 ``` r
+
 library(ipf)
 library(tibble)
 data(anes24)
@@ -25,6 +26,7 @@ The data contains 966 respondents from the ANES 2024 face-to-face
 sample:
 
 ``` r
+
 anes24
 #> # A tibble: 966 × 7
 #>    state sex    race     income     education    married  presidential
@@ -48,6 +50,7 @@ Before writing targets, inspect the levels in your sample and see where
 values are missing:
 
 ``` r
+
 table(anes24$sex, useNA = 'ifany')
 #> 
 #> Female   Male   <NA> 
@@ -75,6 +78,7 @@ must match the levels in your data, and the values should be proportions
 summing to 1.
 
 ``` r
+
 targets <- list(
   sex = c(Male = 0.472, Female = 0.528),
   race = c(
@@ -101,6 +105,7 @@ The main function is
 [`rake()`](http://christophertkenny.com/ipf/reference/rake.md):
 
 ``` r
+
 result <- rake(anes24, targets, cap = NULL)
 result
 #> 
@@ -118,6 +123,7 @@ If you want missing values in a raking variable to act like their own
 implicit category, use `na_method = 'bucket'`:
 
 ``` r
+
 bucketed <- rake(anes24, targets, cap = NULL, na_method = 'bucket')
 bucketed
 #> 
@@ -132,6 +138,7 @@ bucketed
 If you already have design weights, pass them through `base_weights`:
 
 ``` r
+
 base_w <- ifelse(anes24$sex == 'Female', 1.1, 0.9)
 base_w[is.na(base_w)] <- 1
 
@@ -155,6 +162,7 @@ deff of 1.0 means no inflation (uniform weights). Higher values mean
 less effective data.
 
 ``` r
+
 design_effect(result$weights)
 #> $deff
 #> [1] 1.113407
@@ -169,6 +177,7 @@ design_effect(result$weights)
 diagnostic report:
 
 ``` r
+
 summary(result)
 #> 
 #> ── Raking Summary (ipf)
@@ -225,6 +234,7 @@ distribution is to the target.
 For programmatic use, the `broom`-style methods return `tibble`s:
 
 ``` r
+
 # One row per variable-level
 tidy(result)
 #> # A tibble: 10 × 5
@@ -254,6 +264,7 @@ glance(result)
 To use the weights in downstream analyses, attach them to your data:
 
 ``` r
+
 weighted_data <- augment(result)
 head(weighted_data)
 #> # A tibble: 6 × 8
@@ -272,6 +283,7 @@ The `.weight` column can then be used in downstream analyses.
 For example, you can compare an estimate before and after weighting:
 
 ``` r
+
 presidential_data <- subset(weighted_data, !is.na(presidential))
 
 presidential_unweighted <- prop.table(table(presidential_data$presidential))
@@ -308,6 +320,7 @@ By default, weights are capped at 5. Tighter bounds reduce extreme
 weights but can leave more residual mismatch.
 
 ``` r
+
 # Unbounded fit from above
 range(result$weights)
 #> [1] 0.1993456 1.9275117
@@ -352,6 +365,7 @@ With many potential raking variables, you can let `ipf` select only the
 most discrepant ones:
 
 ``` r
+
 targets_many <- list(
   sex = c(Male = 0.472, Female = 0.528),
   race = c(
@@ -386,6 +400,7 @@ variables.
 You can inspect raw discrepancy scores without raking:
 
 ``` r
+
 find_discrepant_vars(
   anes24,
   targets_many,

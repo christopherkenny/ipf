@@ -11,6 +11,7 @@ You can install the development version of ipf from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("pak")
 pak::pak("christopherkenny/ipf")
 ```
@@ -20,6 +21,7 @@ pak::pak("christopherkenny/ipf")
 Rake a survey sample to match known population targets:
 
 ``` r
+
 library(ipf)
 data(anes24)
 
@@ -51,6 +53,7 @@ Examine per-variable diagnostics with
 [`summary()`](https://rdrr.io/r/base/summary.html):
 
 ``` r
+
 summary(result)
 #> 
 #> ── Raking Summary (ipf)
@@ -92,6 +95,7 @@ summary(result)
 Extract weights for downstream analysis:
 
 ``` r
+
 augmented <- augment(result)
 augmented[, c("sex", "race", ".weight")]
 #> # A tibble: 966 × 3
@@ -113,6 +117,7 @@ augmented[, c("sex", "race", ".weight")]
 Get a tidy one-row-per-level view:
 
 ``` r
+
 tidy(result)
 #> # A tibble: 7 × 5
 #>   variable level    target weighted_pct discrepancy
@@ -129,6 +134,7 @@ tidy(result)
 Or a single-row model summary:
 
 ``` r
+
 glance(result)
 #> # A tibble: 1 × 7
 #>   converged iterations max_prop_err  deff n_eff n_obs n_vars
