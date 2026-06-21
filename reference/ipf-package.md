@@ -1,9 +1,8 @@
-# ipf: Iterative Proportional Fitting (Raking) with a Rust Backend
+# ipf: Iterative Proportional Fitting
 
-Fast iterative proportional fitting (raking) for survey weighting. The
-computational core is written in Rust for speed and numerical stability.
-Supports multiple raking variables, automatic variable selection, weight
-bounding, and comprehensive diagnostics.
+Fast raking for survey weighting. The computational core is written in
+Rust for speed. Supports multiple raking variables, automatic variable
+selection, weight bounding, and comprehensive diagnostics.
 
 ## See also
 
