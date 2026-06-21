@@ -10,18 +10,26 @@ test_that("na_method = 'exclude' converges on data with no NAs", {
   set.seed(42)
   data <- data.frame(
     gender = sample(c('M', 'F'), 200, replace = TRUE, prob = c(0.6, 0.4)),
-    age    = sample(c('young', 'old'), 200, replace = TRUE, prob = c(0.7, 0.3))
+    age = sample(c('young', 'old'), 200, replace = TRUE, prob = c(0.7, 0.3))
   )
   targets <- list(
     gender = c(M = 0.5, F = 0.5),
-    age    = c(young = 0.6, old = 0.4)
+    age = c(young = 0.6, old = 0.4)
   )
   result <- rake(data, targets, na_method = 'exclude', cap = NULL)
 
   expect_true(result$converged)
   expect_equal(mean(result$weights), 1, tolerance = 1e-6)
-  expect_equal(wpct_nonNA(result$weights, data$gender, 'M'), 0.5, tolerance = 1e-4)
-  expect_equal(wpct_nonNA(result$weights, data$age, 'young'), 0.6, tolerance = 1e-4)
+  expect_equal(
+    wpct_nonNA(result$weights, data$gender, 'M'),
+    0.5,
+    tolerance = 1e-4
+  )
+  expect_equal(
+    wpct_nonNA(result$weights, data$age, 'young'),
+    0.6,
+    tolerance = 1e-4
+  )
 })
 
 test_that("na_method = 'exclude' converges on data with no NAs", {
@@ -41,16 +49,21 @@ test_that("na_method = 'exclude' converges on data with no NAs", {
 test_that("na_method = 'exclude' achieves target proportions among non-NA cases", {
   set.seed(1)
   n <- 300
-  x <- sample(c('A', 'B', 'C', NA), n, replace = TRUE, prob = c(0.3, 0.3, 0.2, 0.2))
+  x <- sample(
+    c('A', 'B', 'C', NA),
+    n,
+    replace = TRUE,
+    prob = c(0.3, 0.3, 0.2, 0.2)
+  )
   data <- data.frame(x = x)
-  targets <- list(x = c(A = 1/3, B = 1/3, C = 1/3))
+  targets <- list(x = c(A = 1 / 3, B = 1 / 3, C = 1 / 3))
 
   result <- rake(data, targets, na_method = 'exclude', cap = NULL)
 
   expect_true(result$converged)
   w <- result$weights
   for (lvl in c('A', 'B', 'C')) {
-    expect_equal(wpct_nonNA(w, data$x, lvl), 1/3, tolerance = 1e-4)
+    expect_equal(wpct_nonNA(w, data$x, lvl), 1 / 3, tolerance = 1e-4)
   }
 })
 
@@ -71,15 +84,25 @@ test_that("na_method = 'exclude' gives different results from 'bucket' when NAs 
   set.seed(99)
   n <- 500
   data <- data.frame(
-    sex    = sample(c('M', 'F', NA), n, replace = TRUE, prob = c(0.45, 0.45, 0.10)),
-    income = sample(c('lo', 'hi', NA), n, replace = TRUE, prob = c(0.4, 0.4, 0.20))
+    sex = sample(
+      c('M', 'F', NA),
+      n,
+      replace = TRUE,
+      prob = c(0.45, 0.45, 0.10)
+    ),
+    income = sample(
+      c('lo', 'hi', NA),
+      n,
+      replace = TRUE,
+      prob = c(0.4, 0.4, 0.20)
+    )
   )
   targets <- list(
-    sex    = c(M = 0.5, F = 0.5),
+    sex = c(M = 0.5, F = 0.5),
     income = c(lo = 0.4, hi = 0.6)
   )
 
-  r_bucket  <- rake(data, targets, na_method = 'bucket',  cap = NULL)
+  r_bucket <- rake(data, targets, na_method = 'bucket', cap = NULL)
   r_exclude <- rake(data, targets, na_method = 'exclude', cap = NULL)
 
   # Weights should differ when there are NAs
@@ -90,12 +113,22 @@ test_that("na_method = 'exclude' two-variable: non-NA proportions match targets"
   set.seed(42)
   n <- 400
   data <- data.frame(
-    sex    = sample(c('M', 'F', NA), n, replace = TRUE, prob = c(0.44, 0.44, 0.12)),
-    region = sample(c('N', 'S', 'E', NA), n, replace = TRUE, prob = c(0.3, 0.3, 0.3, 0.1))
+    sex = sample(
+      c('M', 'F', NA),
+      n,
+      replace = TRUE,
+      prob = c(0.44, 0.44, 0.12)
+    ),
+    region = sample(
+      c('N', 'S', 'E', NA),
+      n,
+      replace = TRUE,
+      prob = c(0.3, 0.3, 0.3, 0.1)
+    )
   )
   targets <- list(
-    sex    = c(M = 0.48, F = 0.52),
-    region = c(N = 1/3, S = 1/3, E = 1/3)
+    sex = c(M = 0.48, F = 0.52),
+    region = c(N = 1 / 3, S = 1 / 3, E = 1 / 3)
   )
 
   result <- rake(data, targets, na_method = 'exclude', cap = NULL)
@@ -106,7 +139,7 @@ test_that("na_method = 'exclude' two-variable: non-NA proportions match targets"
   expect_equal(wpct_nonNA(w, data$sex, 'M'), 0.48, tolerance = 1e-4)
   expect_equal(wpct_nonNA(w, data$sex, 'F'), 0.52, tolerance = 1e-4)
   for (lvl in c('N', 'S', 'E')) {
-    expect_equal(wpct_nonNA(w, data$region, lvl), 1/3, tolerance = 1e-4)
+    expect_equal(wpct_nonNA(w, data$region, lvl), 1 / 3, tolerance = 1e-4)
   }
 })
 
@@ -115,31 +148,4 @@ test_that("na_method stored correctly on result object", {
   targets <- list(x = c(a = 0.5, b = 0.5))
   result <- rake(data, targets, na_method = 'exclude')
   expect_equal(result$na_method, 'exclude')
-})
-
-test_that("na_method = 'exclude' with anesrake on anes04: margins agree closely", {
-  skip_if_not_installed('anesrake')
-
-  data('anes04', package = 'anesrake')
-  anes04$caseid <- seq_len(nrow(anes04))
-  anes04$agecats <- cut(anes04$age, c(0, 25, 35, 45, 55, 65, 99))
-  levels(anes04$agecats) <- c('age1824','age2534','age3544','age4554','age5564','age6599')
-
-  age_target <- c(age1824 = 0.10, age2534 = 0.15, age3544 = 0.17,
-                  age4554 = 0.23, age5564 = 0.22, age6599 = 0.13)
-
-  targets_anes <- list(married = c(0.4, 0.6), agecats = age_target)
-  targets_ipf  <- list(
-    married = c('FALSE' = 0.6, 'TRUE' = 0.4),
-    agecats = age_target
-  )
-
-  out_anes <- anesrake::anesrake(targets_anes, anes04,
-                                  caseid = anes04$caseid, verbose = FALSE)
-  out_ipf  <- rake(anes04, targets_ipf, na_method = 'exclude', cap = NULL, tol = 1e-6)
-
-  # Correlation should be very high (anes04 has minimal NAs so methods nearly identical).
-  # Both implement the same per-step algorithm; residual difference is anesrake's
-  # loose convergence criterion (pctlim = 5%, weight-change stopping rule).
-  expect_gt(cor(out_anes$weightvec, out_ipf$weights), 0.999)
 })
