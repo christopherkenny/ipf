@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+use extendr_api::Result;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,14 +61,14 @@ fn parse_margins(margins: List) -> Result<Vec<Margin>> {
         let levels: Vec<usize> = li
             .iter()
             .map(|x| {
-                let v = if x.is_na() { 0 } else { x.inner() };
+                let v = if x.is_na() { 0i32 } else { x.0 };
                 v.max(0) as usize
             })
             .collect();
 
         let targets: Vec<f64> = td
             .iter()
-            .map(|x| if x.is_na() { 0.0 } else { x.inner() })
+            .map(|x| if x.is_na() { 0.0 } else { x.0 })
             .collect();
 
         // Optional proportional flag (defaults to false = existing total-based behaviour)
@@ -184,7 +185,7 @@ fn rake_ipf_rust(
 ) -> List {
     let mut w: Vec<f64> = weights
         .iter()
-        .map(|x| if x.is_na() { 0.0 } else { x.inner() })
+        .map(|x| if x.is_na() { 0.0 } else { x.0 })
         .collect();
     let n = w.len();
 
@@ -193,8 +194,8 @@ fn rake_ipf_rust(
     } else {
         match TryInto::<Doubles>::try_into(bounds) {
             Ok(v) if v.len() == 2 => {
-                let lo = if v[0].is_na() { f64::NEG_INFINITY } else { v[0].inner() };
-                let hi = if v[1].is_na() { f64::INFINITY } else { v[1].inner() };
+                let lo = if v[0].is_na() { f64::NEG_INFINITY } else { v[0].0 };
+                let hi = if v[1].is_na() { f64::INFINITY } else { v[1].0 };
                 if lo <= hi {
                     Some((lo, hi))
                 } else {
@@ -400,12 +401,12 @@ fn compute_discrepancy_rust(weights: Doubles, levels: Integers, targets: Doubles
         let wi = if weights[i].is_na() {
             0.0
         } else {
-            weights[i].inner()
+            weights[i].0
         };
         let code = if levels[i].is_na() {
             0
         } else {
-            levels[i].inner().max(0) as usize
+            levels[i].0.max(0) as usize
         };
         if code > 0 && code <= l {
             sums[code - 1] += wi;
@@ -419,7 +420,7 @@ fn compute_discrepancy_rust(weights: Doubles, levels: Integers, targets: Doubles
         let tgt = if targets[li].is_na() {
             0.0
         } else {
-            targets[li].inner()
+            targets[li].0
         };
         wpct[li] = if total > 0.0 { sums[li] / total } else { 0.0 };
         disc[li] = tgt - wpct[li];
@@ -446,7 +447,7 @@ fn design_effect_rust(weights: Doubles) -> List {
     let w: Vec<f64> = weights
         .iter()
         .filter(|x| !x.is_na())
-        .map(|x| x.inner())
+        .map(|x| x.0)
         .collect();
     let n = w.len() as f64;
     if n == 0.0 {
@@ -481,7 +482,7 @@ fn weight_summary_rust(weights: Doubles) -> List {
     let mut w: Vec<f64> = weights
         .iter()
         .filter(|x| !x.is_na())
-        .map(|x| x.inner())
+        .map(|x| x.0)
         .collect();
     let n = w.len();
     if n == 0 {
