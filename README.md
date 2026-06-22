@@ -5,6 +5,7 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/christopherkenny/ipf/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/christopherkenny/ipf/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `ipf` provides fast iterative proportional fitting (raking) for survey

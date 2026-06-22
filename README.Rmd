@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 # ipf <a href="http://christophertkenny.com/ipf/"><img src="man/figures/logo.png" align="right" height="138" alt="ipf website" /></a>
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/christopherkenny/ipf/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/christopherkenny/ipf/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `ipf` provides fast iterative proportional fitting (raking) for survey weighting.
