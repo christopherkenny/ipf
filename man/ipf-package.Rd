@@ -13,12 +13,12 @@ Fast raking for survey weighting. The computational core is written in Rust for 
 \seealso{
 Useful links:
 \itemize{
-  \item \url{http://christophertkenny.com/ipf/}
+  \item \url{https://christophertkenny.com/ipf/}
 }
 
 }
 \author{
-\strong{Maintainer}: Christopher T. Kenny \email{christopherkenny@fas.harvard.edu} (\href{https://orcid.org/0000-0002-9386-6860}{ORCID})
+\strong{Maintainer}: Christopher T. Kenny \email{ctkenny@proton.me} (\href{https://orcid.org/0000-0002-9386-6860}{ORCID})
 
 }
 \keyword{internal}
