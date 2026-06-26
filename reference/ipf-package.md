@@ -8,9 +8,9 @@ selection, weight bounding, and comprehensive diagnostics.
 
 Useful links:
 
-- <http://christophertkenny.com/ipf/>
+- <https://christophertkenny.com/ipf/>
 
 ## Author
 
-**Maintainer**: Christopher T. Kenny <christopherkenny@fas.harvard.edu>
+**Maintainer**: Christopher T. Kenny <ctkenny@proton.me>
 ([ORCID](https://orcid.org/0000-0002-9386-6860))
