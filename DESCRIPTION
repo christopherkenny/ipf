@@ -5,11 +5,11 @@ Authors@R:
     person(given = "Christopher T.",
            family = "Kenny",
            role = c("aut", "cre"),
-           email = "christopherkenny@fas.harvard.edu",
+           email = "ctkenny@proton.me",
            comment = c(ORCID = "0000-0002-9386-6860"))
 Description: Fast raking for survey weighting. The computational core
     is written in Rust for speed. Supports multiple raking variables,
-    automatic variable selection, weight bounding, and comprehensive 
+    automatic variable selection, weight bounding, and comprehensive
     diagnostics.
 License: MIT + file LICENSE
 Encoding: UTF-8
