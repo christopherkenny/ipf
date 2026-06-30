@@ -16,4 +16,4 @@
 ## Additional notes
 
 * There is no specific paper to cite for the methods implemented here.
-* This package relies on Rust.
+* This package relies on Rust which may increase the tarball size due to vendored packages.
